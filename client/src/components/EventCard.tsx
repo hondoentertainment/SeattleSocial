@@ -1,4 +1,4 @@
-import { Event } from '../types';
+import type { Event } from '../types';
 import { MapPin, Calendar, Users, Flame } from 'lucide-react';
 import { Link } from 'react-router-dom';
 

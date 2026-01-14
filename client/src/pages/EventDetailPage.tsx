@@ -5,8 +5,6 @@ import {
   Calendar,
   Users,
   Flame,
-  Clock,
-  DollarSign,
   Share2,
   Bookmark,
   TrendingUp,
