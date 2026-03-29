@@ -11,7 +11,7 @@ interface PremiumGateProps {
 }
 
 export default function PremiumGate({
-  requiredTier = 'premium',
+  requiredTier = 'PREMIUM',
   children,
   featureName = 'This feature',
 }: PremiumGateProps) {
@@ -19,9 +19,9 @@ export default function PremiumGate({
   const currentTier = getMembershipTier();
 
   const tierRank: Record<MembershipTier, number> = {
-    free: 0,
-    premium: 1,
-    'premium-plus': 2,
+    FREE: 0,
+    PREMIUM: 1,
+    PREMIUM_PLUS: 2,
   };
 
   if (tierRank[currentTier] >= tierRank[requiredTier]) {
@@ -38,7 +38,7 @@ export default function PremiumGate({
         <div className="absolute inset-0 flex items-center justify-center">
           <div className="flex items-center space-x-1.5 bg-gray-900/80 text-white px-3 py-1.5 rounded-full text-sm font-semibold group-hover:bg-primary-600 transition-colors">
             <Lock className="w-3.5 h-3.5" />
-            <span>{requiredTier === 'premium-plus' ? 'Premium+' : 'Premium'}</span>
+            <span>{requiredTier === 'PREMIUM_PLUS' ? 'Premium+' : 'Premium'}</span>
           </div>
         </div>
       </div>
@@ -67,7 +67,7 @@ export default function PremiumGate({
             </h3>
             <p className="text-gray-600 mb-6">
               {featureName} requires a{' '}
-              {requiredTier === 'premium-plus' ? 'Premium+' : 'Premium'}{' '}
+              {requiredTier === 'PREMIUM_PLUS' ? 'Premium+' : 'Premium'}{' '}
               membership. Upgrade now to access this and many more exclusive features.
             </p>
             <Link

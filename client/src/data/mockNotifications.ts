@@ -23,7 +23,7 @@ export const mockNotifications: Notification[] = [
   },
   {
     id: 'n3',
-    type: 'reminder',
+    type: 'event-reminder',
     title: 'Event Tomorrow',
     message: 'Fremont Friday Night Art Walk starts tomorrow at 6:00 PM. Don\'t forget!',
     timestamp: '2026-03-29T08:00:00',
@@ -33,7 +33,7 @@ export const mockNotifications: Notification[] = [
   },
   {
     id: 'n4',
-    type: 'booking',
+    type: 'booking-confirmed',
     title: 'Booking Confirmed!',
     message: 'Your spot at Tech Startup Networking Mixer is confirmed. See you there!',
     timestamp: '2026-03-28T16:45:00',
@@ -63,7 +63,7 @@ export const mockNotifications: Notification[] = [
   },
   {
     id: 'n7',
-    type: 'reminder',
+    type: 'event-reminder',
     title: 'Last Chance!',
     message: 'Introduction to Mixology Workshop has only 3 spots left. Book now!',
     timestamp: '2026-03-26T09:00:00',
@@ -73,7 +73,7 @@ export const mockNotifications: Notification[] = [
   },
   {
     id: 'n8',
-    type: 'booking',
+    type: 'booking-confirmed',
     title: 'Booking Confirmed!',
     message: 'You\'re all set for Sunset Yoga at Kerry Park. Bring your mat!',
     timestamp: '2026-03-25T15:30:00',

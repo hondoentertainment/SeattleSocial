@@ -11,18 +11,16 @@ interface JwtPayload {
 
 /**
  * JWT authentication middleware.
- * Extracts the Bearer token from the Authorization header,
+ * Extracts the token from the Authorization header or auth_token cookie,
  * verifies it, and attaches userId to the request.
  */
 export function authenticate(req: AuthenticatedRequest, res: Response, next: NextFunction): void {
-  const authHeader = req.headers.authorization;
+  const token = req.headers.authorization?.replace('Bearer ', '') || req.cookies?.auth_token;
 
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+  if (!token) {
     next(new AppError(401, 'Authentication required. Provide a Bearer token.'));
     return;
   }
-
-  const token = authHeader.split(' ')[1];
 
   try {
     const decoded = jwt.verify(token, config.jwtSecret) as JwtPayload;

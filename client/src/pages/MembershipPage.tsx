@@ -27,7 +27,7 @@ interface PlanConfig {
 
 const plans: PlanConfig[] = [
   {
-    tier: 'free',
+    tier: 'FREE',
     name: 'Free',
     price: 0,
     description: 'Get started discovering Seattle events.',
@@ -43,7 +43,7 @@ const plans: PlanConfig[] = [
     buttonText: 'Current Plan',
   },
   {
-    tier: 'premium',
+    tier: 'PREMIUM',
     name: 'Premium',
     price: 9.99,
     description: 'The full Seattle Social experience.',
@@ -61,7 +61,7 @@ const plans: PlanConfig[] = [
     buttonText: 'Upgrade to Premium',
   },
   {
-    tier: 'premium-plus',
+    tier: 'PREMIUM_PLUS',
     name: 'Premium+',
     price: 19.99,
     description: 'The ultimate VIP experience.',
@@ -130,9 +130,9 @@ export default function MembershipPage() {
   const [processing, setProcessing] = useState<MembershipTier | null>(null);
 
   const tierRank: Record<MembershipTier, number> = {
-    free: 0,
-    premium: 1,
-    'premium-plus': 2,
+    FREE: 0,
+    PREMIUM: 1,
+    PREMIUM_PLUS: 2,
   };
 
   const handleSelectPlan = (tier: MembershipTier) => {
@@ -210,7 +210,7 @@ export default function MembershipPage() {
                 )}
 
                 <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${plan.gradient} flex items-center justify-center mb-4 ${
-                  plan.tier === 'premium-plus' ? 'text-amber-600' : plan.tier === 'premium' ? 'text-primary-600' : 'text-gray-600'
+                  plan.tier === 'PREMIUM_PLUS' ? 'text-amber-600' : plan.tier === 'PREMIUM' ? 'text-primary-600' : 'text-gray-600'
                 }`}>
                   {plan.icon}
                 </div>

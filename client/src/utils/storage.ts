@@ -24,14 +24,14 @@ export function addBooking(booking: Booking): void {
 export function cancelBooking(bookingId: string): void {
   const bookings = getBookings();
   const updated = bookings.map(b =>
-    b.id === bookingId ? { ...b, status: 'cancelled' as const } : b
+    b.id === bookingId ? { ...b, status: 'CANCELLED' as const } : b
   );
   localStorage.setItem(BOOKINGS_KEY, JSON.stringify(updated));
 }
 
 export function getBookingForEvent(eventId: string): Booking | undefined {
   return getBookings().find(
-    b => b.eventId === eventId && b.status === 'confirmed'
+    b => b.eventId === eventId && b.status === 'CONFIRMED'
   );
 }
 
@@ -64,10 +64,10 @@ export function unsaveEvent(eventId: string): void {
 export function getMembershipTier(): MembershipTier {
   try {
     const raw = localStorage.getItem(MEMBERSHIP_KEY);
-    if (raw === 'premium' || raw === 'premium-plus') return raw;
-    return 'free';
+    if (raw === 'PREMIUM' || raw === 'PREMIUM_PLUS') return raw;
+    return 'FREE';
   } catch {
-    return 'free';
+    return 'FREE';
   }
 }
 

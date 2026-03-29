@@ -101,7 +101,7 @@ router.post(
 
       switch (event.type) {
         case 'payment_intent.succeeded': {
-          const paymentIntent = event.data.object as { id: string; metadata: Record<string, string> };
+          const paymentIntent = event.data.object as { id: string; amount: number; metadata: Record<string, string> };
           await prisma.payment.updateMany({
             where: { stripePaymentIntentId: paymentIntent.id },
             data: { status: 'SUCCEEDED' },
@@ -115,14 +115,27 @@ router.post(
             });
             if (!existingBooking) {
               const evt = await prisma.event.findUnique({ where: { id: eventId } });
+              if (!evt) break;
+
               const tickets = parseInt(ticketCount || '1', 10);
+              const expectedAmountCents = Math.round(evt.price * tickets * 100);
+
+              // Validate payment amount matches event price to prevent tampering
+              if (paymentIntent.amount !== expectedAmountCents) {
+                console.error(
+                  `Payment amount mismatch for PI ${paymentIntent.id}: ` +
+                  `received ${paymentIntent.amount} cents, expected ${expectedAmountCents} cents`
+                );
+                break;
+              }
+
               await prisma.booking.create({
                 data: {
                   userId,
                   eventId,
                   status: 'CONFIRMED',
                   ticketCount: tickets,
-                  totalPaid: (evt?.price || 0) * tickets,
+                  totalPaid: evt.price * tickets,
                 },
               });
             }

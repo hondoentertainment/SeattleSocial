@@ -17,6 +17,9 @@ import ProfilePage from './pages/ProfilePage';
 import MyEventsPage from './pages/MyEventsPage';
 import MembershipPage from './pages/MembershipPage';
 import FriendsPage from './pages/FriendsPage';
+import ForgotPasswordPage from './pages/ForgotPasswordPage';
+import ResetPasswordPage from './pages/ResetPasswordPage';
+import NotFoundPage from './pages/NotFoundPage';
 import { usePageTracking } from './hooks/usePageTracking';
 import { useSimulatedNotifications } from './hooks/useSimulatedNotifications';
 import { seedBookings } from './data/mockBookings';
@@ -47,6 +50,8 @@ function AppContent() {
           <Route path="/events" element={<HomePage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
+          <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+          <Route path="/reset-password" element={<ResetPasswordPage />} />
           <Route
             path="/calendar"
             element={
@@ -81,6 +86,7 @@ function AppContent() {
           />
           <Route path="/membership" element={<MembershipPage />} />
           <Route path="/friends" element={<FriendsPage />} />
+          <Route path="*" element={<NotFoundPage />} />
         </Routes>
       </main>
     </div>

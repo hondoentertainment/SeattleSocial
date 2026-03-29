@@ -10,6 +10,7 @@ import type { User, LoginRequest, RegisterRequest } from '../types';
 import {
   loginUser as apiLogin,
   registerUser as apiRegister,
+  logoutUser as apiLogout,
   getCurrentUser,
   setToken,
   clearToken,
@@ -72,8 +73,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const logout = useCallback(() => {
-    clearToken();
-    setUser(null);
+    // Call server to clear HttpOnly cookie, then clear local state
+    apiLogout().finally(() => {
+      clearToken();
+      setUser(null);
+    });
   }, []);
 
   const updateUser = useCallback((updatedUser: User) => {

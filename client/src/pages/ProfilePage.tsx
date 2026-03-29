@@ -25,15 +25,15 @@ import ToastContainer from '../components/Toast';
 type Tab = 'events' | 'saved' | 'friends';
 
 const tierLabels: Record<string, { label: string; color: string }> = {
-  free: { label: 'Free', color: 'bg-gray-200 text-gray-700' },
-  premium: { label: 'Premium', color: 'bg-primary-100 text-primary-700' },
-  'premium-plus': { label: 'Premium+', color: 'bg-yellow-100 text-yellow-700' },
+  FREE: { label: 'Free', color: 'bg-gray-200 text-gray-700' },
+  PREMIUM: { label: 'Premium', color: 'bg-primary-100 text-primary-700' },
+  PREMIUM_PLUS: { label: 'Premium+', color: 'bg-yellow-100 text-yellow-700' },
 };
 
 export default function ProfilePage() {
   const [activeTab, setActiveTab] = useState<Tab>('events');
   const [editing, setEditing] = useState(false);
-  const [name, setName] = useState(mockUser.name);
+  const [name, setName] = useState(mockUser.displayName);
   const [bio, setBio] = useState(mockUser.bio);
   const [editName, setEditName] = useState(name);
   const [editBio, setEditBio] = useState(bio);
@@ -249,11 +249,11 @@ export default function ProfilePage() {
               >
                 <img
                   src={friend.avatar}
-                  alt={friend.name}
+                  alt={friend.displayName}
                   className="w-12 h-12 rounded-full object-cover"
                 />
                 <div className="flex-1 min-w-0">
-                  <h4 className="font-semibold text-gray-900 truncate">{friend.name}</h4>
+                  <h4 className="font-semibold text-gray-900 truncate">{friend.displayName}</h4>
                   <p className="text-sm text-gray-500">{friend.mutualEvents} mutual events</p>
                 </div>
                 <User className="w-5 h-5 text-gray-300 flex-shrink-0" />
@@ -296,12 +296,12 @@ export default function ProfilePage() {
           </div>
 
           {/* Membership Upgrade */}
-          {mockUser.membershipTier !== 'premium-plus' && (
+          {mockUser.membershipTier !== 'PREMIUM_PLUS' && (
             <div className="bg-gradient-to-br from-primary-600 to-primary-800 rounded-xl p-6 text-white">
               <div className="flex items-center gap-3 mb-3">
                 <Star className="w-6 h-6 text-yellow-300" />
                 <h3 className="text-xl font-bold">
-                  {mockUser.membershipTier === 'free' ? 'Upgrade to Premium' : 'Upgrade to Premium+'}
+                  {mockUser.membershipTier === 'FREE' ? 'Upgrade to Premium' : 'Upgrade to Premium+'}
                 </h3>
               </div>
               <p className="text-primary-100 mb-4">

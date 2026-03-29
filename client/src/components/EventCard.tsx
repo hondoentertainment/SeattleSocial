@@ -1,6 +1,20 @@
 import { useState } from 'react';
 import type { Event } from '../types';
-import { MapPin, Calendar, Users, Flame, Heart, Play } from 'lucide-react';
+import {
+  MapPin,
+  Calendar,
+  Users,
+  Flame,
+  Heart,
+  Play,
+  Music,
+  UtensilsCrossed,
+  Palette,
+  Dumbbell,
+  Handshake,
+  Moon,
+  BookOpen,
+} from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useSavedEvents } from '../hooks/useSavedEvents';
 import { mockFriendsGoingData } from '../data/mockSocial';
@@ -10,12 +24,24 @@ interface EventCardProps {
   event: Event;
 }
 
+const categoryIcons: Record<string, typeof Music> = {
+  music: Music,
+  'food-drink': UtensilsCrossed,
+  'arts-culture': Palette,
+  'sports-fitness': Dumbbell,
+  networking: Handshake,
+  nightlife: Moon,
+  learning: BookOpen,
+  community: Heart,
+};
+
 function getInitials(name: string): string {
   return name.split(' ').map(n => n[0]).join('').toUpperCase();
 }
 
 export default function EventCard({ event }: EventCardProps) {
   const [showFriendsPopup, setShowFriendsPopup] = useState(false);
+  const [imageError, setImageError] = useState(false);
   const { isSaved, toggleSaved } = useSavedEvents();
 
   const saved = isSaved(event.id);
@@ -57,6 +83,8 @@ export default function EventCard({ event }: EventCardProps) {
   const flames = Array(getFlameCount(event.fomoScore)).fill(null);
   const percentageSold = Math.round((event.ticketsSold / event.capacity) * 100);
 
+  const CategoryIcon = categoryIcons[event.category] ?? Calendar;
+
   const handleCardClick = (): void => {
     trackEvent('event_card_clicked', { eventId: event.id, title: event.title });
   };
@@ -77,11 +105,19 @@ export default function EventCard({ event }: EventCardProps) {
       <article className="card hover:scale-[1.02] transition-transform duration-300">
         {/* Image */}
         <div className="relative h-48 bg-gray-200 group">
-          <img
-            src={event.imageUrl}
-            alt={event.title}
-            className="w-full h-full object-cover"
-          />
+          {imageError ? (
+            <div className="w-full h-full bg-gradient-to-br from-primary-500 to-primary-800 flex items-center justify-center">
+              <CategoryIcon className="w-16 h-16 text-white/40" />
+            </div>
+          ) : (
+            <img
+              src={event.imageUrl}
+              alt={event.title}
+              className="w-full h-full object-cover"
+              loading="lazy"
+              onError={() => setImageError(true)}
+            />
+          )}
 
           {/* Video play overlay */}
           {event.videoUrl && (
@@ -170,9 +206,9 @@ export default function EventCard({ event }: EventCardProps) {
                       key={friend.id}
                       className="w-7 h-7 rounded-full bg-primary-100 border-2 border-white flex items-center justify-center text-primary-700 text-xs font-bold"
                       role="img"
-                      aria-label={friend.name}
+                      aria-label={friend.displayName}
                     >
-                      {getInitials(friend.name)}
+                      {getInitials(friend.displayName)}
                     </div>
                   ))}
                 </div>
@@ -191,7 +227,7 @@ export default function EventCard({ event }: EventCardProps) {
                 >
                   <p className="text-xs font-semibold text-gray-500 mb-2">Friends going:</p>
                   {friendsGoing.map((f) => (
-                    <p key={f.id} className="text-sm text-gray-700 py-0.5">{f.name}</p>
+                    <p key={f.id} className="text-sm text-gray-700 py-0.5">{f.displayName}</p>
                   ))}
                 </div>
               )}

@@ -33,6 +33,9 @@ export async function createPaymentIntent(
 ): Promise<{ clientSecret: string; paymentIntentId: string } | null> {
   const client = getStripe();
   if (!client) {
+    if (config.nodeEnv === 'production') {
+      throw new Error('Stripe is not configured. Payment processing is unavailable in production.');
+    }
     // Mock mode: return a fake payment intent for development
     const mockId = `pi_mock_${Date.now()}_${Math.random().toString(36).substring(2, 10)}`;
     return {
@@ -41,11 +44,19 @@ export async function createPaymentIntent(
     };
   }
 
-  const paymentIntent = await client.paymentIntents.create({
-    amount: Math.round(amount * 100), // Convert to cents
-    currency,
-    metadata,
-  });
+  // Generate idempotency key from userId-eventId-timestamp to prevent duplicate charges
+  const idempotencyKey = metadata.userId && metadata.eventId
+    ? `${metadata.userId}-${metadata.eventId}-${Date.now()}`
+    : undefined;
+
+  const paymentIntent = await client.paymentIntents.create(
+    {
+      amount: Math.round(amount * 100), // Convert to cents
+      currency,
+      metadata,
+    },
+    idempotencyKey ? { idempotencyKey } : undefined
+  );
 
   return {
     clientSecret: paymentIntent.client_secret!,
@@ -94,6 +105,9 @@ export async function createMembershipCheckout(
   if (!priceAmount) return null;
 
   if (!client) {
+    if (config.nodeEnv === 'production') {
+      throw new Error('Stripe is not configured. Membership checkout is unavailable in production.');
+    }
     // Mock mode
     const mockId = `pi_mock_membership_${Date.now()}`;
     return {

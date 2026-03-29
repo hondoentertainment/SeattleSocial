@@ -44,11 +44,11 @@ export default function MyEventsPage() {
     .filter((x): x is BookingWithEvent => x !== null);
 
   const upcoming = bookingsWithEvents
-    .filter(x => new Date(x.event.startTime) >= now && x.booking.status === 'confirmed')
+    .filter(x => new Date(x.event.startTime) >= now && x.booking.status === 'CONFIRMED')
     .sort((a, b) => new Date(a.event.startTime).getTime() - new Date(b.event.startTime).getTime());
 
   const past = bookingsWithEvents
-    .filter(x => new Date(x.event.startTime) < now || x.booking.status === 'cancelled')
+    .filter(x => new Date(x.event.startTime) < now || x.booking.status === 'CANCELLED')
     .sort((a, b) => new Date(b.event.startTime).getTime() - new Date(a.event.startTime).getTime());
 
   const displayed = activeTab === 'upcoming' ? upcoming : past;
@@ -61,7 +61,7 @@ export default function MyEventsPage() {
   };
 
   const getStatusBadge = (booking: Booking) => {
-    if (booking.status === 'cancelled') {
+    if (booking.status === 'CANCELLED') {
       return (
         <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-red-100 text-red-700">
           Cancelled
@@ -167,11 +167,11 @@ export default function MyEventsPage() {
                       <Ticket className="w-4 h-4" />
                       <span>
                         {booking.ticketCount} ticket{booking.ticketCount > 1 ? 's' : ''}
-                        {booking.totalPrice > 0 && ` - $${booking.totalPrice.toFixed(2)}`}
+                        {booking.totalPaid > 0 && ` - $${booking.totalPaid.toFixed(2)}`}
                       </span>
                     </div>
                   </div>
-                  {activeTab === 'upcoming' && booking.status === 'confirmed' && (
+                  {activeTab === 'upcoming' && booking.status === 'CONFIRMED' && (
                     <button
                       onClick={() => setCancelTarget(booking)}
                       className="text-sm font-semibold text-red-600 hover:text-red-700 transition-colors"

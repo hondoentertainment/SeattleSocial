@@ -16,8 +16,8 @@ function getInitials(name: string): string {
 }
 
 const tierColors: Record<string, string> = {
-  premium: 'bg-yellow-100 text-yellow-800',
-  'premium-plus': 'bg-purple-100 text-purple-800',
+  PREMIUM: 'bg-yellow-100 text-yellow-800',
+  PREMIUM_PLUS: 'bg-purple-100 text-purple-800',
 };
 
 export default function FriendCard({ user, status, onAction }: FriendCardProps) {
@@ -25,22 +25,22 @@ export default function FriendCard({ user, status, onAction }: FriendCardProps) 
     <div className="bg-white rounded-xl shadow-md p-6 flex flex-col items-center text-center">
       {/* Avatar */}
       <div className="relative mb-3">
-        {user.avatar ? (
+        {user.avatarUrl ? (
           <img
-            src={user.avatar}
-            alt={`${user.name}'s avatar`}
+            src={user.avatarUrl}
+            alt={`${user.displayName}'s avatar`}
             className="w-20 h-20 rounded-full object-cover"
           />
         ) : (
           <div
             className="w-20 h-20 rounded-full bg-primary-100 flex items-center justify-center text-primary-700 text-xl font-bold"
             role="img"
-            aria-label={`${user.name}'s avatar`}
+            aria-label={`${user.displayName}'s avatar`}
           >
-            {getInitials(user.name)}
+            {getInitials(user.displayName)}
           </div>
         )}
-        {user.membershipTier !== 'free' && (
+        {user.membershipTier && user.membershipTier !== 'FREE' && (
           <span
             className="absolute -top-1 -right-1 p-1 bg-white rounded-full shadow"
             aria-label={`${user.membershipTier} member`}
@@ -51,10 +51,10 @@ export default function FriendCard({ user, status, onAction }: FriendCardProps) 
       </div>
 
       {/* Name & badge */}
-      <h3 className="text-lg font-bold text-gray-900">{user.name}</h3>
-      {user.membershipTier !== 'free' && (
-        <span className={`text-xs font-semibold px-2 py-0.5 rounded-full mt-1 ${tierColors[user.membershipTier]}`}>
-          {user.membershipTier === 'premium-plus' ? 'Premium+' : 'Premium'}
+      <h3 className="text-lg font-bold text-gray-900">{user.displayName}</h3>
+      {user.membershipTier && user.membershipTier !== 'FREE' && (
+        <span className={`text-xs font-semibold px-2 py-0.5 rounded-full mt-1 ${tierColors[user.membershipTier || 'FREE']}`}>
+          {user.membershipTier === 'PREMIUM_PLUS' ? 'Premium+' : 'Premium'}
         </span>
       )}
 
@@ -98,7 +98,7 @@ export default function FriendCard({ user, status, onAction }: FriendCardProps) 
             <button
               onClick={() => onAction?.(user.id, 'accept')}
               className="flex-1 btn-primary text-sm py-2 flex items-center justify-center space-x-1 focus-visible:ring-2 focus-visible:ring-primary-500"
-              aria-label={`Accept friend request from ${user.name}`}
+              aria-label={`Accept friend request from ${user.displayName}`}
             >
               <Check className="w-4 h-4" aria-hidden="true" />
               <span>Accept</span>
@@ -106,7 +106,7 @@ export default function FriendCard({ user, status, onAction }: FriendCardProps) 
             <button
               onClick={() => onAction?.(user.id, 'decline')}
               className="flex-1 btn-secondary text-sm py-2 focus-visible:ring-2 focus-visible:ring-primary-500"
-              aria-label={`Decline friend request from ${user.name}`}
+              aria-label={`Decline friend request from ${user.displayName}`}
             >
               Decline
             </button>
@@ -116,7 +116,7 @@ export default function FriendCard({ user, status, onAction }: FriendCardProps) 
           <button
             onClick={() => onAction?.(user.id, 'add')}
             className="w-full btn-primary text-sm py-2 flex items-center justify-center space-x-1 focus-visible:ring-2 focus-visible:ring-primary-500"
-            aria-label={`Send friend request to ${user.name}`}
+            aria-label={`Send friend request to ${user.displayName}`}
           >
             <UserPlus className="w-4 h-4" aria-hidden="true" />
             <span>Add Friend</span>

@@ -7,9 +7,9 @@ interface PremiumBadgeProps {
 }
 
 export default function PremiumBadge({ tier, className = '' }: PremiumBadgeProps) {
-  if (tier === 'free') return null;
+  if (tier === 'FREE') return null;
 
-  const isPremiumPlus = tier === 'premium-plus';
+  const isPremiumPlus = tier === 'PREMIUM_PLUS';
 
   return (
     <span

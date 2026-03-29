@@ -32,8 +32,27 @@ import {
   Loader2,
   XCircle,
   UserPlus,
+  SearchX,
+  Music,
+  UtensilsCrossed,
+  Palette,
+  Dumbbell,
+  Handshake,
+  Moon,
+  BookOpen,
 } from 'lucide-react';
 import type { Booking } from '../types';
+
+const categoryIcons: Record<string, typeof Music> = {
+  music: Music,
+  'food-drink': UtensilsCrossed,
+  'arts-culture': Palette,
+  'sports-fitness': Dumbbell,
+  networking: Handshake,
+  nightlife: Moon,
+  learning: BookOpen,
+  community: Heart,
+};
 
 function generateBookingId(): string {
   return `bk-${crypto.randomUUID()}`;
@@ -48,6 +67,7 @@ export default function EventDetailPage() {
   const { isSaved, toggleSaved } = useSavedEvents();
   const { toasts, addToast, removeToast } = useToast();
   const [loading, setLoading] = useState(true);
+  const [heroImageError, setHeroImageError] = useState(false);
 
   // Booking state
   const [ticketCount, setTicketCount] = useState(1);
@@ -77,15 +97,18 @@ export default function EventDetailPage() {
 
   if (!event) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
         <SEOHead title="Event Not Found" />
-        <div className="text-center">
-          <h1 className="text-2xl font-bold text-gray-900 mb-4">Event not found</h1>
-          <Link
-            to="/"
-            className="text-primary-600 hover:text-primary-700 focus-visible:ring-2 focus-visible:ring-primary-500 rounded"
-          >
-            Return to homepage
+        <div className="text-center max-w-md">
+          <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-gray-100 mb-6">
+            <SearchX className="w-10 h-10 text-gray-400" />
+          </div>
+          <h2 className="text-2xl font-bold text-gray-900 mb-3">Event not found</h2>
+          <p className="text-gray-600 mb-6">
+            This event may have been removed or the link is incorrect.
+          </p>
+          <Link to="/" className="btn-primary inline-block">
+            Browse all events
           </Link>
         </div>
       </div>
@@ -98,6 +121,8 @@ export default function EventDetailPage() {
 
   // Save/share handlers
   const saved = isSaved(event.id);
+
+  const CategoryIcon = categoryIcons[event.category] ?? Calendar;
 
   const handleToggleSave = () => {
     toggleSaved(event.id);
@@ -195,9 +220,9 @@ export default function EventDetailPage() {
         eventId: event.id,
         userId: 'user-1',
         ticketCount,
-        totalPrice: 0,
-        status: 'confirmed',
-        bookedAt: new Date().toISOString(),
+        totalPaid: 0,
+        status: 'CONFIRMED',
+        createdAt: new Date().toISOString(),
       };
       addBooking(newBooking);
       setBooking(newBooking);
@@ -219,9 +244,9 @@ export default function EventDetailPage() {
       eventId: event.id,
       userId: 'user-1',
       ticketCount,
-      totalPrice: finalPrice,
-      status: 'confirmed',
-      bookedAt: new Date().toISOString(),
+      totalPaid: finalPrice,
+      status: 'CONFIRMED',
+      createdAt: new Date().toISOString(),
     };
     addBooking(newBooking);
     setBooking(newBooking);
@@ -265,11 +290,17 @@ export default function EventDetailPage() {
         <div className="relative h-96 rounded-2xl overflow-hidden shadow-2xl">
           {event.videoUrl ? (
             <VideoPlayer videoUrl={event.videoUrl} imageUrl={event.imageUrl} title={event.title} />
+          ) : heroImageError ? (
+            <div className="w-full h-full bg-gradient-to-br from-primary-500 to-primary-800 flex items-center justify-center">
+              <CategoryIcon className="w-24 h-24 text-white/40" />
+            </div>
           ) : (
             <img
               src={event.imageUrl}
               alt={event.title}
               className="w-full h-full object-cover"
+              loading="lazy"
+              onError={() => setHeroImageError(true)}
             />
           )}
           <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent pointer-events-none" />
@@ -382,7 +413,7 @@ export default function EventDetailPage() {
             </section>
 
             {/* Who's Going section (premium-gated) */}
-            <PremiumGate featureName="Who's Going" requiredTier="premium">
+            <PremiumGate featureName="Who's Going" requiredTier="PREMIUM">
               <section className="bg-white rounded-xl shadow-md p-8">
                 <div className="flex items-center justify-between mb-6">
                   <div className="flex items-center space-x-3">
@@ -415,11 +446,11 @@ export default function EventDetailPage() {
                           <div
                             className="w-10 h-10 rounded-full bg-primary-100 flex items-center justify-center text-primary-700 text-sm font-bold flex-shrink-0"
                             role="img"
-                            aria-label={`${friend.name}'s avatar`}
+                            aria-label={`${friend.displayName}'s avatar`}
                           >
-                            {getInitials(friend.name)}
+                            {getInitials(friend.displayName)}
                           </div>
-                          <span className="text-sm font-medium text-gray-900 truncate">{friend.name}</span>
+                          <span className="text-sm font-medium text-gray-900 truncate">{friend.displayName}</span>
                         </div>
                       ))}
                     </div>
@@ -631,7 +662,7 @@ export default function EventDetailPage() {
               )}
 
               {/* Premium Upsell / Badge */}
-              {membershipTier === 'free' ? (
+              {membershipTier === 'FREE' ? (
                 <div className="mt-6 p-4 bg-gradient-to-br from-primary-50 to-primary-100 rounded-lg border border-primary-200">
                   <div className="flex items-center space-x-2 mb-2">
                     <TrendingUp className="w-5 h-5 text-primary-600" aria-hidden="true" />

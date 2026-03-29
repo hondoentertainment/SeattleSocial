@@ -42,13 +42,13 @@ export type EventCategory =
 
 export interface User {
   id: string;
-  name: string;
+  displayName: string;
   email: string;
-  profilePhoto?: string;
-  neighborhood: string;
-  interests: EventCategory[];
+  avatarUrl?: string | null;
+  bio?: string | null;
   membershipTier: MembershipTier;
-  eventsAttended: number;
+  membershipExpiresAt?: string | null;
+  createdAt?: string;
 }
 
 // Auth types
@@ -65,7 +65,7 @@ export interface LoginRequest {
 
 export interface RegisterRequest {
   email: string;
-  name: string;
+  displayName: string;
   password: string;
 }
 
@@ -85,8 +85,16 @@ export interface ApiError {
 }
 
 export interface CheckoutSession {
-  url: string;
-  sessionId: string;
+  clientSecret: string;
+  paymentId: string;
+  amount: number;
+  mock: boolean;
+}
+
+export interface MembershipCheckoutResponse {
+  sessionUrl: string;
+  mock: boolean;
+  message: string;
 }
 
 // FOMO types
@@ -113,20 +121,21 @@ export type PriceFilter = 'any' | 'free' | 'under-25' | 'under-50';
 export type SortOption = 'fomo' | 'date' | 'price-low' | 'price-high';
 
 // Booking types
-export type BookingStatus = 'confirmed' | 'cancelled' | 'pending' | 'waitlisted';
+export type BookingStatus = 'CONFIRMED' | 'CANCELLED' | 'WAITLISTED';
 
 export interface Booking {
   id: string;
   eventId: string;
   userId: string;
   ticketCount: number;
-  totalPrice: number;
+  totalPaid: number;
   status: BookingStatus;
-  bookedAt: string;
+  createdAt: string;
+  event?: Event;
 }
 
 // Membership types
-export type MembershipTier = 'free' | 'premium' | 'premium-plus';
+export type MembershipTier = 'FREE' | 'PREMIUM' | 'PREMIUM_PLUS';
 
 export interface PricingPlan {
   tier: MembershipTier;
@@ -139,13 +148,15 @@ export interface PricingPlan {
 // Social / Friend types
 export interface SocialUser {
   id: string;
-  name: string;
-  avatar?: string;
-  neighborhood: string;
-  membershipTier: MembershipTier;
-  mutualFriends: number;
+  displayName: string;
+  avatarUrl?: string | null;
+  bio?: string | null;
+  /** Client-side only fields for mock/display purposes */
+  neighborhood?: string;
+  membershipTier?: MembershipTier;
+  mutualFriends?: number;
   lastEventTogether?: string;
-  eventsAttended: number;
+  eventsAttended?: number;
 }
 
 export type FriendStatus = 'friends' | 'pending-outgoing' | 'pending-incoming' | 'none';
@@ -155,7 +166,7 @@ export interface FriendRequest {
   from: SocialUser;
   to: SocialUser;
   createdAt: string;
-  status: 'pending' | 'accepted' | 'declined';
+  status: 'PENDING' | 'ACCEPTED' | 'DECLINED';
 }
 
 export interface FriendsGoingData {
@@ -165,7 +176,7 @@ export interface FriendsGoingData {
 
 export interface MockUser {
   id: string;
-  name: string;
+  displayName: string;
   bio: string;
   avatar: string;
   memberSince: string;
@@ -178,7 +189,7 @@ export interface MockUser {
 
 export interface Friend {
   id: string;
-  name: string;
+  displayName: string;
   avatar: string;
   mutualEvents: number;
 }

@@ -1,3 +1,9 @@
+// NOTE: SQLite is used for local development only.
+// For production, switch the provider to "postgresql" and update DATABASE_URL accordingly.
+// Example:
+//   provider = "postgresql"
+//   url      = env("DATABASE_URL") // e.g. "postgresql://user:pass@host:5432/seattlesocial"
+
 generator client {
   provider = "prisma-client-js"
 }
@@ -16,16 +22,20 @@ model User {
   bio                 String?
   membershipTier      String    @default("FREE") // FREE, PREMIUM, PREMIUM_PLUS
   membershipExpiresAt DateTime?
+  resetToken          String?
+  resetTokenExpiry    DateTime?
   createdAt           DateTime  @default(now())
   updatedAt           DateTime  @updatedAt
 
-  organizedEvents      Event[]        @relation("OrganizerEvents")
-  bookings             Booking[]
-  savedEvents          SavedEvent[]
-  sentFriendRequests   Friendship[]   @relation("FriendRequester")
-  receivedFriendRequests Friendship[] @relation("FriendAddressee")
-  notifications        Notification[]
-  payments             Payment[]
+  organizedEvents        Event[]        @relation("OrganizerEvents")
+  bookings               Booking[]
+  savedEvents            SavedEvent[]
+  sentFriendRequests     Friendship[]   @relation("FriendRequester")
+  receivedFriendRequests Friendship[]   @relation("FriendAddressee")
+  notifications          Notification[]
+  payments               Payment[]
+
+  @@index([email])
 }
 
 model Event {
@@ -52,17 +62,22 @@ model Event {
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
 
-  bookings     Booking[]
-  savedBy      SavedEvent[]
+  bookings      Booking[]
+  savedBy       SavedEvent[]
   notifications Notification[]
+
+  @@index([organizerId])
+  @@index([category])
+  @@index([startTime])
+  @@index([venueNeighborhood])
 }
 
 model Booking {
   id          String   @id @default(cuid())
   userId      String
-  user        User     @relation(fields: [userId], references: [id])
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   eventId     String
-  event       Event    @relation(fields: [eventId], references: [id])
+  event       Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
   status      String   @default("CONFIRMED") // CONFIRMED, CANCELLED, WAITLISTED
   ticketCount Int      @default(1)
   totalPaid   Float    @default(0)
@@ -71,54 +86,68 @@ model Booking {
   payment Payment?
 
   @@unique([userId, eventId])
+  @@index([eventId, status])
+  @@index([userId, status])
 }
 
 model SavedEvent {
   id        String   @id @default(cuid())
   userId    String
-  user      User     @relation(fields: [userId], references: [id])
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   eventId   String
-  event     Event    @relation(fields: [eventId], references: [id])
+  event     Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
   createdAt DateTime @default(now())
 
   @@unique([userId, eventId])
+  @@index([userId])
+  @@index([eventId])
 }
 
 model Friendship {
   id          String   @id @default(cuid())
   requesterId String
-  requester   User     @relation("FriendRequester", fields: [requesterId], references: [id])
+  requester   User     @relation("FriendRequester", fields: [requesterId], references: [id], onDelete: Cascade)
   addresseeId String
-  addressee   User     @relation("FriendAddressee", fields: [addresseeId], references: [id])
+  addressee   User     @relation("FriendAddressee", fields: [addresseeId], references: [id], onDelete: Cascade)
   status      String   @default("PENDING") // PENDING, ACCEPTED, DECLINED
   createdAt   DateTime @default(now())
 
   @@unique([requesterId, addresseeId])
+  @@index([requesterId])
+  @@index([addresseeId])
+  @@index([status])
 }
 
 model Notification {
   id        String   @id @default(cuid())
   userId    String
-  user      User     @relation(fields: [userId], references: [id])
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   type      String   // FOMO_SPIKE, FRIEND_RSVP, EVENT_REMINDER, BOOKING_CONFIRMED, PRICE_DROP, FRIEND_REQUEST
   title     String
   message   String
   eventId   String?
-  event     Event?   @relation(fields: [eventId], references: [id])
+  event     Event?   @relation(fields: [eventId], references: [id], onDelete: Cascade)
   isRead    Boolean  @default(false)
   createdAt DateTime @default(now())
+
+  @@index([userId, isRead])
+  @@index([createdAt])
 }
 
 model Payment {
   id                    String   @id @default(cuid())
   userId                String
-  user                  User     @relation(fields: [userId], references: [id])
+  user                  User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   amount                Float
   currency              String   @default("usd")
   stripePaymentIntentId String?
   status                String   @default("PENDING") // PENDING, SUCCEEDED, FAILED, REFUNDED
   type                  String   // EVENT_BOOKING, MEMBERSHIP_UPGRADE
   bookingId             String?  @unique
-  booking               Booking? @relation(fields: [bookingId], references: [id])
+  booking               Booking? @relation(fields: [bookingId], references: [id], onDelete: Cascade)
   createdAt             DateTime @default(now())
+
+  @@index([userId])
+  @@index([bookingId])
+  @@index([stripePaymentIntentId])
 }

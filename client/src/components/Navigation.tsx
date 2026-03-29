@@ -45,21 +45,21 @@ export default function Navigation({ notificationCount = 0 }: NavigationProps) {
   }, []);
 
   const tierLabel: Record<string, string> = {
-    free: 'Free',
-    premium: 'Premium',
-    'premium-plus': 'Premium+',
+    FREE: 'Free',
+    PREMIUM: 'Premium',
+    PREMIUM_PLUS: 'Premium+',
   };
 
   const tierColor: Record<string, string> = {
-    free: 'bg-gray-100 text-gray-700',
-    premium: 'bg-primary-100 text-primary-700',
-    'premium-plus': 'bg-amber-100 text-amber-700',
+    FREE: 'bg-gray-100 text-gray-700',
+    PREMIUM: 'bg-primary-100 text-primary-700',
+    PREMIUM_PLUS: 'bg-amber-100 text-amber-700',
   };
 
-  const membershipTier = user?.membershipTier || 'free';
-  const userInitial = user?.name?.charAt(0)?.toUpperCase() || '?';
+  const membershipTier = user?.membershipTier || 'FREE';
+  const userInitial = user?.displayName?.charAt(0)?.toUpperCase() || '?';
 
-  // Active route styling (from agent 2)
+  // Active route styling
   const isActive = (path: string) => {
     if (path === '/events') return location.pathname === '/' || location.pathname === '/events';
     return location.pathname === path;
@@ -83,7 +83,7 @@ export default function Navigation({ notificationCount = 0 }: NavigationProps) {
 
   return (
     <nav className="bg-white shadow-md sticky top-0 z-50" aria-label="Main navigation">
-      {/* Skip to content link (from agent 5) */}
+      {/* Skip to content link */}
       <a
         href="#main-content"
         className="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-[60] focus:bg-primary-600 focus:text-white focus:px-4 focus:py-2 focus:rounded-lg"
@@ -93,7 +93,7 @@ export default function Navigation({ notificationCount = 0 }: NavigationProps) {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
-          {/* Logo with PremiumBadge (from agent 4) */}
+          {/* Logo with PremiumBadge */}
           <Link
             to="/"
             className="flex items-center space-x-2 focus-visible:ring-2 focus-visible:ring-primary-500 rounded"
@@ -146,8 +146,8 @@ export default function Navigation({ notificationCount = 0 }: NavigationProps) {
           <div className="hidden md:flex items-center space-x-4">
             {isAuthenticated ? (
               <>
-                {/* Dynamic CTA based on tier (from agent 4) */}
-                {membershipTier === 'free' ? (
+                {/* Dynamic CTA based on tier */}
+                {membershipTier === 'FREE' ? (
                   <Link
                     to="/membership"
                     className="btn-primary flex items-center space-x-1 text-sm py-2 focus-visible:ring-2 focus-visible:ring-primary-500"
@@ -164,7 +164,7 @@ export default function Navigation({ notificationCount = 0 }: NavigationProps) {
                   </Link>
                 )}
 
-                {/* User Dropdown (from agent 3) */}
+                {/* User Dropdown */}
                 <div className="relative" ref={dropdownRef}>
                   <button
                     onClick={() => setDropdownOpen(!dropdownOpen)}
@@ -173,10 +173,10 @@ export default function Navigation({ notificationCount = 0 }: NavigationProps) {
                     aria-haspopup="true"
                     aria-label="User menu"
                   >
-                    {user?.profilePhoto ? (
+                    {user?.avatarUrl ? (
                       <img
-                        src={user.profilePhoto}
-                        alt={user.name}
+                        src={user.avatarUrl}
+                        alt={user.displayName}
                         className="w-8 h-8 rounded-full object-cover"
                       />
                     ) : (
@@ -195,7 +195,7 @@ export default function Navigation({ notificationCount = 0 }: NavigationProps) {
                       {/* User info */}
                       <div className="px-4 py-3 border-b border-gray-100">
                         <p className="text-sm font-semibold text-gray-900">
-                          {user?.name}
+                          {user?.displayName}
                         </p>
                         <p className="text-xs text-gray-500">{user?.email}</p>
                       </div>
@@ -395,7 +395,7 @@ export default function Navigation({ notificationCount = 0 }: NavigationProps) {
                       {tierLabel[membershipTier]} Member
                     </span>
                   </div>
-                  {membershipTier === 'free' ? (
+                  {membershipTier === 'FREE' ? (
                     <Link
                       to="/membership"
                       className="w-full btn-primary mb-3 flex items-center justify-center space-x-1"

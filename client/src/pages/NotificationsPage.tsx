@@ -23,11 +23,13 @@ const iconMap: Record<string, typeof Flame> = {
   'alert-circle': AlertCircle,
 };
 
-const typeColorMap: Record<Notification['type'], string> = {
+const typeColorMap: Record<string, string> = {
   'fomo-spike': 'bg-red-100 text-red-600',
   'friend-rsvp': 'bg-primary-100 text-primary-600',
-  'reminder': 'bg-yellow-100 text-yellow-600',
-  'booking': 'bg-green-100 text-green-600',
+  'event-reminder': 'bg-yellow-100 text-yellow-600',
+  'booking-confirmed': 'bg-green-100 text-green-600',
+  'price-drop': 'bg-blue-100 text-blue-600',
+  'friend-request': 'bg-purple-100 text-purple-600',
 };
 
 function groupNotifications(notifications: Notification[]) {
@@ -98,7 +100,7 @@ export default function NotificationsPage() {
         </h3>
         <div className="space-y-2">
           {items.map(notification => {
-            const Icon = iconMap[notification.icon] || Bell;
+            const Icon = iconMap[notification.icon || ''] || Bell;
             return (
               <div
                 key={notification.id}
@@ -109,7 +111,7 @@ export default function NotificationsPage() {
                     : 'bg-primary-50 hover:bg-primary-100 border-l-4 border-primary-500'
                 }`}
               >
-                <div className={`p-2.5 rounded-full flex-shrink-0 ${typeColorMap[notification.type]}`}>
+                <div className={`p-2.5 rounded-full flex-shrink-0 ${typeColorMap[notification.type] || 'bg-gray-100 text-gray-600'}`}>
                   <Icon className="w-5 h-5" />
                 </div>
                 <div className="flex-1 min-w-0">
@@ -128,7 +130,7 @@ export default function NotificationsPage() {
                       onClick={(e) => e.stopPropagation()}
                       className="inline-block mt-2 text-xs font-medium text-primary-600 hover:text-primary-700"
                     >
-                      View Event →
+                      View Event &rarr;
                     </Link>
                   )}
                 </div>

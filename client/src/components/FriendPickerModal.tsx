@@ -23,7 +23,7 @@ export default function FriendPickerModal({ isOpen, onClose, eventTitle }: Frien
 
   const friends = mockUsers.filter(u => currentUserFriendIds.includes(u.id));
   const filtered = friends.filter(f =>
-    f.name.toLowerCase().includes(search.toLowerCase())
+    f.displayName.toLowerCase().includes(search.toLowerCase())
   );
 
   // Focus trap and escape handling
@@ -167,13 +167,13 @@ function FriendRow({ friend, isSelected, onToggle }: { friend: SocialUser; isSel
 
       {/* Avatar */}
       <div className="w-10 h-10 rounded-full bg-primary-100 flex items-center justify-center text-primary-700 text-sm font-bold flex-shrink-0"
-           role="img" aria-label={`${friend.name}'s avatar`}>
-        {getInitials(friend.name)}
+           role="img" aria-label={`${friend.displayName}'s avatar`}>
+        {getInitials(friend.displayName)}
       </div>
 
       {/* Info */}
       <div className="flex-1 min-w-0">
-        <div className="font-semibold text-gray-900 text-sm">{friend.name}</div>
+        <div className="font-semibold text-gray-900 text-sm">{friend.displayName}</div>
         <div className="text-xs text-gray-500">{friend.neighborhood}</div>
       </div>
     </button>

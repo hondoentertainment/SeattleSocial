@@ -47,8 +47,8 @@ CREATE TABLE "Booking" (
     "ticketCount" INTEGER NOT NULL DEFAULT 1,
     "totalPaid" REAL NOT NULL DEFAULT 0,
     "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    CONSTRAINT "Booking_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User" ("id") ON DELETE RESTRICT ON UPDATE CASCADE,
-    CONSTRAINT "Booking_eventId_fkey" FOREIGN KEY ("eventId") REFERENCES "Event" ("id") ON DELETE RESTRICT ON UPDATE CASCADE
+    CONSTRAINT "Booking_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User" ("id") ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT "Booking_eventId_fkey" FOREIGN KEY ("eventId") REFERENCES "Event" ("id") ON DELETE CASCADE ON UPDATE CASCADE
 );
 
 -- CreateTable
@@ -57,8 +57,8 @@ CREATE TABLE "SavedEvent" (
     "userId" TEXT NOT NULL,
     "eventId" TEXT NOT NULL,
     "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    CONSTRAINT "SavedEvent_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User" ("id") ON DELETE RESTRICT ON UPDATE CASCADE,
-    CONSTRAINT "SavedEvent_eventId_fkey" FOREIGN KEY ("eventId") REFERENCES "Event" ("id") ON DELETE RESTRICT ON UPDATE CASCADE
+    CONSTRAINT "SavedEvent_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User" ("id") ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT "SavedEvent_eventId_fkey" FOREIGN KEY ("eventId") REFERENCES "Event" ("id") ON DELETE CASCADE ON UPDATE CASCADE
 );
 
 -- CreateTable
@@ -68,8 +68,8 @@ CREATE TABLE "Friendship" (
     "addresseeId" TEXT NOT NULL,
     "status" TEXT NOT NULL DEFAULT 'PENDING',
     "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    CONSTRAINT "Friendship_requesterId_fkey" FOREIGN KEY ("requesterId") REFERENCES "User" ("id") ON DELETE RESTRICT ON UPDATE CASCADE,
-    CONSTRAINT "Friendship_addresseeId_fkey" FOREIGN KEY ("addresseeId") REFERENCES "User" ("id") ON DELETE RESTRICT ON UPDATE CASCADE
+    CONSTRAINT "Friendship_requesterId_fkey" FOREIGN KEY ("requesterId") REFERENCES "User" ("id") ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT "Friendship_addresseeId_fkey" FOREIGN KEY ("addresseeId") REFERENCES "User" ("id") ON DELETE CASCADE ON UPDATE CASCADE
 );
 
 -- CreateTable
@@ -82,8 +82,8 @@ CREATE TABLE "Notification" (
     "eventId" TEXT,
     "isRead" BOOLEAN NOT NULL DEFAULT false,
     "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    CONSTRAINT "Notification_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User" ("id") ON DELETE RESTRICT ON UPDATE CASCADE,
-    CONSTRAINT "Notification_eventId_fkey" FOREIGN KEY ("eventId") REFERENCES "Event" ("id") ON DELETE SET NULL ON UPDATE CASCADE
+    CONSTRAINT "Notification_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User" ("id") ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT "Notification_eventId_fkey" FOREIGN KEY ("eventId") REFERENCES "Event" ("id") ON DELETE CASCADE ON UPDATE CASCADE
 );
 
 -- CreateTable
@@ -97,24 +97,75 @@ CREATE TABLE "Payment" (
     "type" TEXT NOT NULL,
     "bookingId" TEXT,
     "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    CONSTRAINT "Payment_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User" ("id") ON DELETE RESTRICT ON UPDATE CASCADE,
-    CONSTRAINT "Payment_bookingId_fkey" FOREIGN KEY ("bookingId") REFERENCES "Booking" ("id") ON DELETE SET NULL ON UPDATE CASCADE
+    CONSTRAINT "Payment_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User" ("id") ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT "Payment_bookingId_fkey" FOREIGN KEY ("bookingId") REFERENCES "Booking" ("id") ON DELETE CASCADE ON UPDATE CASCADE
 );
 
 -- CreateIndex
 CREATE UNIQUE INDEX "User_email_key" ON "User"("email");
 
 -- CreateIndex
+CREATE INDEX "User_email_idx" ON "User"("email");
+
+-- CreateIndex
 CREATE UNIQUE INDEX "Event_slug_key" ON "Event"("slug");
+
+-- CreateIndex
+CREATE INDEX "Event_organizerId_idx" ON "Event"("organizerId");
+
+-- CreateIndex
+CREATE INDEX "Event_category_idx" ON "Event"("category");
+
+-- CreateIndex
+CREATE INDEX "Event_startTime_idx" ON "Event"("startTime");
+
+-- CreateIndex
+CREATE INDEX "Event_venueNeighborhood_idx" ON "Event"("venueNeighborhood");
+
+-- CreateIndex
+CREATE INDEX "Booking_eventId_status_idx" ON "Booking"("eventId", "status");
+
+-- CreateIndex
+CREATE INDEX "Booking_userId_status_idx" ON "Booking"("userId", "status");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "Booking_userId_eventId_key" ON "Booking"("userId", "eventId");
 
 -- CreateIndex
+CREATE INDEX "SavedEvent_userId_idx" ON "SavedEvent"("userId");
+
+-- CreateIndex
+CREATE INDEX "SavedEvent_eventId_idx" ON "SavedEvent"("eventId");
+
+-- CreateIndex
 CREATE UNIQUE INDEX "SavedEvent_userId_eventId_key" ON "SavedEvent"("userId", "eventId");
+
+-- CreateIndex
+CREATE INDEX "Friendship_requesterId_idx" ON "Friendship"("requesterId");
+
+-- CreateIndex
+CREATE INDEX "Friendship_addresseeId_idx" ON "Friendship"("addresseeId");
+
+-- CreateIndex
+CREATE INDEX "Friendship_status_idx" ON "Friendship"("status");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "Friendship_requesterId_addresseeId_key" ON "Friendship"("requesterId", "addresseeId");
 
 -- CreateIndex
+CREATE INDEX "Notification_userId_isRead_idx" ON "Notification"("userId", "isRead");
+
+-- CreateIndex
+CREATE INDEX "Notification_createdAt_idx" ON "Notification"("createdAt");
+
+-- CreateIndex
 CREATE UNIQUE INDEX "Payment_bookingId_key" ON "Payment"("bookingId");
+
+-- CreateIndex
+CREATE INDEX "Payment_userId_idx" ON "Payment"("userId");
+
+-- CreateIndex
+CREATE INDEX "Payment_bookingId_idx" ON "Payment"("bookingId");
+
+-- CreateIndex
+CREATE INDEX "Payment_stripePaymentIntentId_idx" ON "Payment"("stripePaymentIntentId");

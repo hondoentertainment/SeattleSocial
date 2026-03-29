@@ -25,7 +25,7 @@ export function useSimulatedNotifications(
         break;
       case 'friend-rsvp':
         toast.info(
-          `${friend.name} is going to ${event.title}`
+          `${friend.displayName} is going to ${event.title}`
         );
         break;
       case 'event-reminder':

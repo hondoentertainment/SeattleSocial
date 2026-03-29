@@ -20,14 +20,14 @@ export default function FriendsPage() {
 
   const friends = mockUsers.filter(u => currentUserFriendIds.includes(u.id));
   const incomingRequests = mockFriendRequests.filter(
-    r => r.status === 'pending' && !currentUserFriendIds.includes(r.from.id)
+    r => r.status === 'PENDING' && !currentUserFriendIds.includes(r.from.id)
   );
   const outgoingRequests = mockFriendRequests.filter(
-    r => r.status === 'pending' && currentUserFriendIds.includes(r.from.id) && !currentUserFriendIds.includes(r.to.id)
+    r => r.status === 'PENDING' && currentUserFriendIds.includes(r.from.id) && !currentUserFriendIds.includes(r.to.id)
   );
 
   const filteredFriends = friends.filter(f =>
-    f.name.toLowerCase().includes(searchQuery.toLowerCase())
+    f.displayName.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   const handleAction = (userId: string, action: string) => {

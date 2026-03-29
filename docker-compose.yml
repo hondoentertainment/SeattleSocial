@@ -1,0 +1,29 @@
+version: '3.8'
+services:
+  app:
+    build: .
+    ports:
+      - "3001:3001"
+    environment:
+      - NODE_ENV=production
+      - JWT_SECRET=${JWT_SECRET}
+      - DATABASE_URL=file:./dev.db
+      - CLIENT_URL=http://localhost:3001
+    volumes:
+      - db-data:/app/server/prisma
+
+  # PostgreSQL for production use
+  postgres:
+    image: postgres:16-alpine
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=seattlesocial
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-devpassword}
+      - POSTGRES_DB=seattlesocial
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+volumes:
+  db-data:
+  pgdata:

@@ -5,6 +5,7 @@ import { validate } from '../middleware/validate';
 import { AuthenticatedRequest, AppError, param } from '../types';
 import { parsePagination, paginate, generateSlug, categoryToDb, categoryFromDb, parseTags } from '../utils/helpers';
 import { calculateFomoScore } from '../services/fomo';
+import { sanitizeText } from '../utils/sanitize';
 
 const router = Router();
 const prisma = new PrismaClient();
@@ -236,9 +237,9 @@ router.post(
   authenticate,
   validate({
     title: { required: true, type: 'string', minLength: 3, maxLength: 200 },
-    description: { required: true, type: 'string', minLength: 10 },
-    venueName: { required: true, type: 'string' },
-    venueAddress: { required: true, type: 'string' },
+    description: { required: true, type: 'string', minLength: 10, maxLength: 5000 },
+    venueName: { required: true, type: 'string', maxLength: 200 },
+    venueAddress: { required: true, type: 'string', maxLength: 500 },
     venueNeighborhood: { required: true, type: 'string' },
     startTime: { required: true, type: 'string' },
     endTime: { required: true, type: 'string' },
@@ -248,10 +249,15 @@ router.post(
   async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
     try {
       const {
-        title, description, venueName, venueAddress, venueNeighborhood,
         venueLat, venueLng, startTime, endTime, category, price,
         capacity, imageUrl, videoUrl, tags, isPublished,
       } = req.body;
+
+      const title = sanitizeText(req.body.title);
+      const description = sanitizeText(req.body.description);
+      const venueName = sanitizeText(req.body.venueName);
+      const venueAddress = sanitizeText(req.body.venueAddress);
+      const venueNeighborhood = req.body.venueNeighborhood;
 
       const slug = generateSlug(title);
 
@@ -303,10 +309,29 @@ router.put(
       }
 
       const {
-        title, description, venueName, venueAddress, venueNeighborhood,
+        venueNeighborhood,
         venueLat, venueLng, startTime, endTime, category, price,
         capacity, imageUrl, videoUrl, tags, isPublished,
       } = req.body;
+
+      const title = req.body.title !== undefined ? sanitizeText(req.body.title) : undefined;
+      const description = req.body.description !== undefined ? sanitizeText(req.body.description) : undefined;
+      const venueName = req.body.venueName !== undefined ? sanitizeText(req.body.venueName) : undefined;
+      const venueAddress = req.body.venueAddress !== undefined ? sanitizeText(req.body.venueAddress) : undefined;
+
+      // maxLength validation on update
+      if (title !== undefined && title.length > 200) {
+        throw new AppError(400, 'title must be at most 200 characters.');
+      }
+      if (description !== undefined && description.length > 5000) {
+        throw new AppError(400, 'description must be at most 5000 characters.');
+      }
+      if (venueName !== undefined && venueName.length > 200) {
+        throw new AppError(400, 'venueName must be at most 200 characters.');
+      }
+      if (venueAddress !== undefined && venueAddress.length > 500) {
+        throw new AppError(400, 'venueAddress must be at most 500 characters.');
+      }
 
       const data: Prisma.EventUpdateInput = {};
       if (title !== undefined) { data.title = title; data.slug = generateSlug(title); }

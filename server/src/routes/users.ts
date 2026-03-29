@@ -4,6 +4,7 @@ import { authenticate } from '../middleware/auth';
 import { AuthenticatedRequest, AppError, param } from '../types';
 import { parsePagination, paginate, categoryFromDb, parseTags } from '../utils/helpers';
 import { notifyFriendRequest } from '../services/notifications';
+import { sanitizeText } from '../utils/sanitize';
 
 const router = Router();
 const prisma = new PrismaClient();
@@ -59,7 +60,18 @@ router.put(
   authenticate,
   async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
     try {
-      const { displayName, avatarUrl, bio } = req.body;
+      const { avatarUrl } = req.body;
+      const displayName = req.body.displayName !== undefined ? sanitizeText(req.body.displayName) : undefined;
+      const bio = req.body.bio !== undefined ? sanitizeText(req.body.bio) : undefined;
+
+      // maxLength validation
+      if (displayName !== undefined && displayName.length > 100) {
+        throw new AppError(400, 'displayName must be at most 100 characters.');
+      }
+      if (bio !== undefined && bio.length > 500) {
+        throw new AppError(400, 'bio must be at most 500 characters.');
+      }
+
       const data: Record<string, unknown> = {};
       if (displayName !== undefined) data.displayName = displayName;
       if (avatarUrl !== undefined) data.avatarUrl = avatarUrl;
