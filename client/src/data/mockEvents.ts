@@ -22,6 +22,7 @@ export const mockEvents: Event[] = [
     ticketsSold: 342,
     fomoScore: 87,
     imageUrl: 'https://images.unsplash.com/photo-1470229722913-7c0e2dbbafd3?w=800',
+    videoUrl: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
     tags: ['indie', 'live-music', '21+', 'late-night'],
     attendees: 342,
     friendsGoing: 5
@@ -222,6 +223,7 @@ export const mockEvents: Event[] = [
     ticketsSold: 198,
     fomoScore: 79,
     imageUrl: 'https://images.unsplash.com/photo-1571266028243-d220c8b6fea4?w=800',
+    videoUrl: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
     tags: ['electronic', 'dj', 'late-night', '21+', 'dance'],
     attendees: 198,
     friendsGoing: 6

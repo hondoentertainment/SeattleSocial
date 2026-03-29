@@ -47,10 +47,49 @@ export interface User {
   profilePhoto?: string;
   neighborhood: string;
   interests: EventCategory[];
-  membershipTier: 'free' | 'premium' | 'premium-plus';
+  membershipTier: MembershipTier;
   eventsAttended: number;
 }
 
+// Auth types
+export interface AuthState {
+  user: User | null;
+  isAuthenticated: boolean;
+  isLoading: boolean;
+}
+
+export interface LoginRequest {
+  email: string;
+  password: string;
+}
+
+export interface RegisterRequest {
+  email: string;
+  name: string;
+  password: string;
+}
+
+export interface AuthResponse {
+  token: string;
+  user: User;
+}
+
+export interface ApiResponse<T> {
+  data: T;
+  message?: string;
+}
+
+export interface ApiError {
+  message: string;
+  status: number;
+}
+
+export interface CheckoutSession {
+  url: string;
+  sessionId: string;
+}
+
+// FOMO types
 export interface FOMOIndexBreakdown {
   ticketVelocity: number;
   socialBuzz: number;
@@ -66,4 +105,124 @@ export interface Filters {
   priceRange: [number, number];
   neighborhoods: string[];
   fomoThreshold: number;
+}
+
+// Filter types
+export type DateFilter = 'any' | 'today' | 'this-weekend' | 'this-week' | 'this-month';
+export type PriceFilter = 'any' | 'free' | 'under-25' | 'under-50';
+export type SortOption = 'fomo' | 'date' | 'price-low' | 'price-high';
+
+// Booking types
+export type BookingStatus = 'confirmed' | 'cancelled' | 'pending' | 'waitlisted';
+
+export interface Booking {
+  id: string;
+  eventId: string;
+  userId: string;
+  ticketCount: number;
+  totalPrice: number;
+  status: BookingStatus;
+  bookedAt: string;
+}
+
+// Membership types
+export type MembershipTier = 'free' | 'premium' | 'premium-plus';
+
+export interface PricingPlan {
+  tier: MembershipTier;
+  name: string;
+  price: number;
+  features: string[];
+  highlighted?: boolean;
+}
+
+// Social / Friend types
+export interface SocialUser {
+  id: string;
+  name: string;
+  avatar?: string;
+  neighborhood: string;
+  membershipTier: MembershipTier;
+  mutualFriends: number;
+  lastEventTogether?: string;
+  eventsAttended: number;
+}
+
+export type FriendStatus = 'friends' | 'pending-outgoing' | 'pending-incoming' | 'none';
+
+export interface FriendRequest {
+  id: string;
+  from: SocialUser;
+  to: SocialUser;
+  createdAt: string;
+  status: 'pending' | 'accepted' | 'declined';
+}
+
+export interface FriendsGoingData {
+  eventId: string;
+  friends: SocialUser[];
+}
+
+export interface MockUser {
+  id: string;
+  name: string;
+  bio: string;
+  avatar: string;
+  memberSince: string;
+  membershipTier: MembershipTier;
+  eventsAttended: number;
+  friendsCount: number;
+  neighborhood: string;
+  interests: EventCategory[];
+}
+
+export interface Friend {
+  id: string;
+  name: string;
+  avatar: string;
+  mutualEvents: number;
+}
+
+// Notification types
+export type NotificationType =
+  | 'fomo-spike'
+  | 'friend-rsvp'
+  | 'event-reminder'
+  | 'booking-confirmed'
+  | 'price-drop'
+  | 'friend-request';
+
+export interface Notification {
+  id: string;
+  type: NotificationType;
+  title: string;
+  message: string;
+  timestamp: string;
+  read: boolean;
+  eventId?: string;
+  userId?: string;
+  icon?: string;
+}
+
+export type AppNotification = Notification;
+
+// Toast types
+export type ToastType = 'success' | 'error' | 'info' | 'warning';
+
+export interface Toast {
+  id: string;
+  type: ToastType;
+  message: string;
+}
+
+export interface ToastMessage {
+  id: string;
+  message: string;
+  type: 'success' | 'info' | 'error';
+}
+
+// Analytics types
+export interface AnalyticsEvent {
+  name: string;
+  properties?: Record<string, string | number | boolean>;
 }

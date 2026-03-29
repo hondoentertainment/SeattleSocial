@@ -1,0 +1,124 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                  String    @id @default(cuid())
+  email               String    @unique
+  password            String
+  displayName         String
+  avatarUrl           String?
+  bio                 String?
+  membershipTier      String    @default("FREE") // FREE, PREMIUM, PREMIUM_PLUS
+  membershipExpiresAt DateTime?
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+
+  organizedEvents      Event[]        @relation("OrganizerEvents")
+  bookings             Booking[]
+  savedEvents          SavedEvent[]
+  sentFriendRequests   Friendship[]   @relation("FriendRequester")
+  receivedFriendRequests Friendship[] @relation("FriendAddressee")
+  notifications        Notification[]
+  payments             Payment[]
+}
+
+model Event {
+  id                String   @id @default(cuid())
+  title             String
+  slug              String   @unique
+  description       String
+  organizerId       String
+  organizer         User     @relation("OrganizerEvents", fields: [organizerId], references: [id])
+  venueName         String
+  venueAddress      String
+  venueNeighborhood String
+  venueLat          Float
+  venueLng          Float
+  startTime         DateTime
+  endTime           DateTime
+  category          String   // MUSIC, FOOD_DRINK, ARTS_CULTURE, SPORTS_FITNESS, NETWORKING, LEARNING, NIGHTLIFE, COMMUNITY
+  price             Float    @default(0)
+  capacity          Int
+  imageUrl          String?
+  videoUrl          String?
+  tags              String   @default("[]") // JSON array stored as string (SQLite compatibility)
+  isPublished       Boolean  @default(true)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  bookings     Booking[]
+  savedBy      SavedEvent[]
+  notifications Notification[]
+}
+
+model Booking {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+  eventId     String
+  event       Event    @relation(fields: [eventId], references: [id])
+  status      String   @default("CONFIRMED") // CONFIRMED, CANCELLED, WAITLISTED
+  ticketCount Int      @default(1)
+  totalPaid   Float    @default(0)
+  createdAt   DateTime @default(now())
+
+  payment Payment?
+
+  @@unique([userId, eventId])
+}
+
+model SavedEvent {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  eventId   String
+  event     Event    @relation(fields: [eventId], references: [id])
+  createdAt DateTime @default(now())
+
+  @@unique([userId, eventId])
+}
+
+model Friendship {
+  id          String   @id @default(cuid())
+  requesterId String
+  requester   User     @relation("FriendRequester", fields: [requesterId], references: [id])
+  addresseeId String
+  addressee   User     @relation("FriendAddressee", fields: [addresseeId], references: [id])
+  status      String   @default("PENDING") // PENDING, ACCEPTED, DECLINED
+  createdAt   DateTime @default(now())
+
+  @@unique([requesterId, addresseeId])
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  type      String   // FOMO_SPIKE, FRIEND_RSVP, EVENT_REMINDER, BOOKING_CONFIRMED, PRICE_DROP, FRIEND_REQUEST
+  title     String
+  message   String
+  eventId   String?
+  event     Event?   @relation(fields: [eventId], references: [id])
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+}
+
+model Payment {
+  id                    String   @id @default(cuid())
+  userId                String
+  user                  User     @relation(fields: [userId], references: [id])
+  amount                Float
+  currency              String   @default("usd")
+  stripePaymentIntentId String?
+  status                String   @default("PENDING") // PENDING, SUCCEEDED, FAILED, REFUNDED
+  type                  String   // EVENT_BOOKING, MEMBERSHIP_UPGRADE
+  bookingId             String?  @unique
+  booking               Booking? @relation(fields: [bookingId], references: [id])
+  createdAt             DateTime @default(now())
+}
