@@ -46,24 +46,47 @@ export interface User {
   email: string;
   profilePhoto?: string;
   neighborhood: string;
+  bio?: string;
   interests: EventCategory[];
   membershipTier: 'free' | 'premium' | 'premium-plus';
   eventsAttended: number;
 }
 
+export interface RSVP {
+  id: string;
+  userId: string;
+  eventId: string;
+  status: 'confirmed' | 'cancelled' | 'waitlist';
+  ticketCount: number;
+  totalPaid: number;
+  createdAt: string;
+}
+
+export interface Notification {
+  id: string;
+  userId: string;
+  type: 'rsvp_confirmed' | 'event_reminder' | 'fomo_alert' | 'promo';
+  title: string;
+  message: string;
+  eventId?: string;
+  isRead: boolean;
+  createdAt: string;
+}
+
 export interface FOMOIndexBreakdown {
-  ticketVelocity: number;
-  socialBuzz: number;
-  attendeeDiversity: number;
-  venueScore: number;
-  influencerFactor: number;
-  historicalScore: number;
+  fillRate: number;
+  timePressure: number;
+  socialProof: number;
+  friendFactor: number;
+  total: number;
 }
 
 export interface Filters {
   categories: EventCategory[];
-  dateRange: 'today' | 'week' | 'month' | 'custom';
+  dateRange: 'today' | 'week' | 'month' | 'custom' | 'all';
   priceRange: [number, number];
   neighborhoods: string[];
   fomoThreshold: number;
+  sortBy: 'fomo' | 'date' | 'price-asc' | 'price-desc';
+  freeOnly: boolean;
 }

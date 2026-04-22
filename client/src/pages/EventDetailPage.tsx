@@ -1,18 +1,19 @@
+import { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { mockEvents } from '../data/mockEvents';
-import {
-  MapPin,
-  Calendar,
-  Users,
-  Flame,
-  Share2,
-  Bookmark,
-  TrendingUp,
-  ArrowLeft
-} from 'lucide-react';
+import { MapPin, Calendar, Users, Flame, Share2, Bookmark, BookmarkCheck, TrendingUp, ArrowLeft, CheckCircle, X } from 'lucide-react';
+import { useApp } from '../context/AppContext';
+import { calculateFOMOScore, getFOMOColor, getFOMOLabel, getFlameCount } from '../utils/fomoIndex';
+import AuthModal from '../components/AuthModal';
 
 export default function EventDetailPage() {
   const { id } = useParams<{ id: string }>();
+  const { user, rsvpEventIds, savedEventIds, rsvpToEvent, cancelRsvp, saveEvent, unsaveEvent } = useApp();
+  const [showAuth, setShowAuth] = useState(false);
+  const [rsvpState, setRsvpState] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
+  const [rsvpMessage, setRsvpMessage] = useState('');
+  const [showShareToast, setShowShareToast] = useState(false);
+
   const event = mockEvents.find(e => e.id === id);
 
   if (!event) {
@@ -20,88 +21,110 @@ export default function EventDetailPage() {
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <h2 className="text-2xl font-bold text-gray-900 mb-4">Event not found</h2>
-          <Link to="/" className="text-primary-600 hover:text-primary-700">
-            Return to homepage
-          </Link>
+          <Link to="/" className="text-primary-600 hover:text-primary-700">Return to homepage</Link>
         </div>
       </div>
     );
   }
 
-  const getFOMOBadgeClass = (score: number) => {
-    if (score >= 80) return 'bg-red-500';
-    if (score >= 60) return 'bg-orange-500';
-    if (score >= 40) return 'bg-yellow-500';
-    return 'bg-blue-500';
-  };
-
-  const getFOMOLabel = (score: number) => {
-    if (score >= 80) return 'Selling out fast! Only few spots left';
-    if (score >= 60) return 'High demand - book soon!';
-    if (score >= 40) return 'Popular event';
-    return 'Just announced - growing interest';
-  };
-
-  const getFlameCount = (score: number) => {
-    if (score >= 80) return 3;
-    if (score >= 60) return 2;
-    if (score >= 40) return 1;
-    return 0;
-  };
-
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', {
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-    });
-  };
-
-  const formatTime = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleTimeString('en-US', {
-      hour: 'numeric',
-      minute: '2-digit',
-    });
-  };
-
-  const flames = Array(getFlameCount(event.fomoScore)).fill('🔥').join('');
+  const fomo = calculateFOMOScore(event);
+  const fomoColor = getFOMOColor(fomo.total);
+  const fomoLabel = getFOMOLabel(fomo.total);
+  const flames = '🔥'.repeat(getFlameCount(fomo.total));
   const percentageSold = Math.round((event.ticketsSold / event.capacity) * 100);
   const spotsLeft = event.capacity - event.ticketsSold;
+  const isRsvped = rsvpEventIds.has(event.id);
+  const isSaved = savedEventIds.has(event.id);
+
+  const formatDate = (s: string) => new Date(s).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+  const formatTime = (s: string) => new Date(s).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+
+  const handleRSVP = async () => {
+    if (isRsvped) {
+      setRsvpState('loading');
+      try {
+        await cancelRsvp(event.id);
+        setRsvpMessage('RSVP cancelled.');
+        setRsvpState('success');
+      } catch (e) {
+        setRsvpMessage(e instanceof Error ? e.message : 'Failed to cancel RSVP');
+        setRsvpState('error');
+      }
+      setTimeout(() => setRsvpState('idle'), 3000);
+      return;
+    }
+
+    if (!user) { setShowAuth(true); return; }
+
+    setRsvpState('loading');
+    try {
+      const { isFirstEvent, totalPaid } = await rsvpToEvent(event.id);
+      const msg = isFirstEvent
+        ? "You're in! 🎉 First event FREE — enjoy the experience!"
+        : totalPaid === 0
+          ? "You're in! 🎉 This event is free!"
+          : `You're in! 🎉 $${totalPaid} charged to your card.`;
+      setRsvpMessage(msg);
+      setRsvpState('success');
+    } catch (e) {
+      setRsvpMessage(e instanceof Error ? e.message : 'Failed to RSVP');
+      setRsvpState('error');
+    }
+  };
+
+  const handleSave = async () => {
+    if (isSaved) {
+      await unsaveEvent(event.id);
+    } else {
+      await saveEvent(event.id);
+    }
+  };
+
+  const handleShare = async () => {
+    const url = window.location.href;
+    if (navigator.share) {
+      try {
+        await navigator.share({ title: event.title, text: event.description, url });
+      } catch { /* user cancelled */ }
+    } else {
+      await navigator.clipboard.writeText(url);
+      setShowShareToast(true);
+      setTimeout(() => setShowShareToast(false), 2500);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
+      {showAuth && <AuthModal onClose={() => setShowAuth(false)} />}
+
+      {showShareToast && (
+        <div className="fixed top-20 left-1/2 -translate-x-1/2 z-50 bg-gray-900 text-white px-6 py-3 rounded-full shadow-lg text-sm font-medium">
+          Link copied to clipboard!
+        </div>
+      )}
+
       {/* Back Button */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6">
         <Link to="/" className="inline-flex items-center text-gray-600 hover:text-primary-600 transition-colors">
-          <ArrowLeft className="w-5 h-5 mr-2" />
-          Back to events
+          <ArrowLeft className="w-5 h-5 mr-2" />Back to events
         </Link>
       </div>
 
       {/* Hero Image */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="relative h-96 rounded-2xl overflow-hidden shadow-2xl">
-          <img
-            src={event.imageUrl}
-            alt={event.title}
-            className="w-full h-full object-cover"
-          />
+          <img src={event.imageUrl} alt={event.title} className="w-full h-full object-cover" />
           <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
           <div className="absolute bottom-8 left-8 right-8">
             <div className="flex items-center space-x-3 mb-4">
-              <span className="bg-black/70 text-white px-4 py-2 rounded-full text-sm font-semibold">
+              <span className="bg-black/70 text-white px-4 py-2 rounded-full text-sm font-semibold capitalize">
                 {event.category.replace('-', ' & ')}
               </span>
-              <span className={`${getFOMOBadgeClass(event.fomoScore)} text-white px-4 py-2 rounded-full text-sm font-bold`}>
-                {flames} FOMO: {event.fomoScore}
+              <span className={`${fomoColor} text-white px-4 py-2 rounded-full text-sm font-bold`}>
+                {flames} FOMO: {fomo.total}
               </span>
             </div>
-            <h1 className="text-4xl md:text-5xl font-bold text-white mb-2">
-              {event.title}
-            </h1>
+            <h1 className="text-4xl md:text-5xl font-bold text-white mb-2">{event.title}</h1>
           </div>
         </div>
       </div>
@@ -109,34 +132,50 @@ export default function EventDetailPage() {
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Left Column - Event Details */}
+          {/* Left Column */}
           <div className="lg:col-span-2 space-y-8">
             {/* FOMO Alert */}
-            <div className={`${getFOMOBadgeClass(event.fomoScore)} text-white p-6 rounded-xl`}>
+            <div className={`${fomoColor} text-white p-6 rounded-xl`}>
               <div className="flex items-center space-x-3 mb-2">
                 <Flame className="w-6 h-6" />
-                <h3 className="text-xl font-bold">{getFOMOLabel(event.fomoScore)}</h3>
+                <h3 className="text-xl font-bold">{fomoLabel}</h3>
               </div>
-              <div className="flex items-center space-x-6 text-sm">
+              <div className="flex flex-wrap items-center gap-x-6 gap-y-1 text-sm">
                 <span>{percentageSold}% sold out</span>
                 <span>•</span>
-                <span>Only {spotsLeft} spots remaining</span>
+                <span>{spotsLeft} spot{spotsLeft !== 1 ? 's' : ''} left</span>
                 <span>•</span>
                 <span>{event.attendees} people going</span>
+              </div>
+
+              {/* FOMO Breakdown */}
+              <div className="mt-4 grid grid-cols-2 gap-2 text-xs">
+                <div className="bg-white/20 rounded-lg px-3 py-2">
+                  <div className="font-semibold">Fill Rate</div>
+                  <div>{fomo.fillRate}/40 pts</div>
+                </div>
+                <div className="bg-white/20 rounded-lg px-3 py-2">
+                  <div className="font-semibold">Time Pressure</div>
+                  <div>{fomo.timePressure}/25 pts</div>
+                </div>
+                <div className="bg-white/20 rounded-lg px-3 py-2">
+                  <div className="font-semibold">Social Proof</div>
+                  <div>{fomo.socialProof}/20 pts</div>
+                </div>
+                <div className="bg-white/20 rounded-lg px-3 py-2">
+                  <div className="font-semibold">Friend Factor</div>
+                  <div>{fomo.friendFactor}/15 pts</div>
+                </div>
               </div>
             </div>
 
             {/* Description */}
             <div className="bg-white rounded-xl shadow-md p-8">
               <h2 className="text-2xl font-bold text-gray-900 mb-4">About This Event</h2>
-              <p className="text-gray-700 text-lg leading-relaxed">
-                {event.description}
-              </p>
+              <p className="text-gray-700 text-lg leading-relaxed">{event.description}</p>
               <div className="mt-6 flex flex-wrap gap-2">
                 {event.tags.map(tag => (
-                  <span key={tag} className="bg-gray-100 text-gray-700 px-4 py-2 rounded-full text-sm">
-                    #{tag}
-                  </span>
+                  <span key={tag} className="bg-gray-100 text-gray-700 px-4 py-2 rounded-full text-sm">#{tag}</span>
                 ))}
               </div>
             </div>
@@ -155,23 +194,19 @@ export default function EventDetailPage() {
               </div>
             </div>
 
-            {/* Social Proof */}
+            {/* Friends */}
             {event.friendsGoing > 0 && (
               <div className="bg-primary-50 border-2 border-primary-200 rounded-xl p-6">
                 <div className="flex items-center space-x-3 mb-3">
                   <Users className="w-6 h-6 text-primary-600" />
-                  <h3 className="text-xl font-bold text-gray-900">
-                    {event.friendsGoing} of your friends are going!
-                  </h3>
+                  <h3 className="text-xl font-bold text-gray-900">{event.friendsGoing} of your friends are going!</h3>
                 </div>
-                <p className="text-gray-700">
-                  Join them for an amazing experience. Events are more fun with friends!
-                </p>
+                <p className="text-gray-700">Join them for an amazing experience. Events are more fun with friends!</p>
               </div>
             )}
           </div>
 
-          {/* Right Column - Booking Card */}
+          {/* Right Column — Booking Card */}
           <div className="lg:col-span-1">
             <div className="bg-white rounded-xl shadow-xl p-8 sticky top-24">
               {/* Price */}
@@ -187,9 +222,9 @@ export default function EventDetailPage() {
                       <span className="text-4xl font-bold text-gray-900">${event.price}</span>
                       <span className="text-gray-600">per ticket</span>
                     </div>
-                    <p className="text-sm text-green-600 font-semibold">
-                      🎁 Your first event is FREE!
-                    </p>
+                    {!user && (
+                      <p className="text-sm text-green-600 font-semibold">🎁 Your first event is FREE!</p>
+                    )}
                   </div>
                 )}
               </div>
@@ -197,26 +232,29 @@ export default function EventDetailPage() {
               {/* Event Info */}
               <div className="space-y-4 mb-6">
                 <div className="flex items-start space-x-3">
-                  <Calendar className="w-5 h-5 text-gray-400 mt-1" />
+                  <Calendar className="w-5 h-5 text-gray-400 mt-1 flex-shrink-0" />
                   <div>
                     <div className="font-semibold text-gray-900">{formatDate(event.startTime)}</div>
-                    <div className="text-sm text-gray-600">
-                      {formatTime(event.startTime)} - {formatTime(event.endTime)}
-                    </div>
+                    <div className="text-sm text-gray-600">{formatTime(event.startTime)} – {formatTime(event.endTime)}</div>
                   </div>
                 </div>
-
                 <div className="flex items-start space-x-3">
-                  <MapPin className="w-5 h-5 text-gray-400 mt-1" />
+                  <MapPin className="w-5 h-5 text-gray-400 mt-1 flex-shrink-0" />
                   <div>
                     <div className="font-semibold text-gray-900">{event.venue.name}</div>
                     <div className="text-sm text-gray-600">{event.venue.address}</div>
                     <div className="text-sm text-gray-600">{event.venue.neighborhood}, Seattle</div>
+                    <a
+                      href={`https://maps.google.com/?q=${encodeURIComponent(event.venue.address + ', Seattle, WA')}`}
+                      target="_blank" rel="noopener noreferrer"
+                      className="text-xs text-primary-600 hover:underline mt-1 inline-block"
+                    >
+                      View on Google Maps →
+                    </a>
                   </div>
                 </div>
-
                 <div className="flex items-start space-x-3">
-                  <Users className="w-5 h-5 text-gray-400 mt-1" />
+                  <Users className="w-5 h-5 text-gray-400 mt-1 flex-shrink-0" />
                   <div>
                     <div className="font-semibold text-gray-900">{event.attendees} attending</div>
                     <div className="text-sm text-gray-600">Capacity: {event.capacity}</div>
@@ -224,31 +262,66 @@ export default function EventDetailPage() {
                 </div>
               </div>
 
+              {/* RSVP feedback */}
+              {rsvpState === 'success' && (
+                <div className="mb-4 bg-green-50 border border-green-200 text-green-800 px-4 py-3 rounded-lg text-sm flex items-center space-x-2">
+                  <CheckCircle className="w-4 h-4 flex-shrink-0" />
+                  <span>{rsvpMessage}</span>
+                </div>
+              )}
+              {rsvpState === 'error' && (
+                <div className="mb-4 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm flex items-center space-x-2">
+                  <X className="w-4 h-4 flex-shrink-0" />
+                  <span>{rsvpMessage}</span>
+                </div>
+              )}
+
               {/* Action Buttons */}
               <div className="space-y-3">
-                <button className="w-full btn-primary text-lg py-4">
-                  Reserve Your Spot
+                <button
+                  onClick={handleRSVP}
+                  disabled={rsvpState === 'loading'}
+                  className={`w-full text-lg py-4 rounded-lg font-semibold transition-all disabled:opacity-60 ${
+                    isRsvped
+                      ? 'bg-green-100 text-green-800 border-2 border-green-400 hover:bg-red-50 hover:text-red-700 hover:border-red-400'
+                      : 'btn-primary'
+                  }`}
+                >
+                  {rsvpState === 'loading' ? 'Processing...' : isRsvped ? '✓ You\'re Going — Cancel?' : 'Reserve Your Spot'}
                 </button>
-                <button className="w-full btn-secondary py-3 flex items-center justify-center space-x-2">
-                  <Bookmark className="w-5 h-5" />
-                  <span>Save for Later</span>
+
+                <button
+                  onClick={handleSave}
+                  className="w-full btn-secondary py-3 flex items-center justify-center space-x-2"
+                >
+                  {isSaved ? <BookmarkCheck className="w-5 h-5 text-primary-600" /> : <Bookmark className="w-5 h-5" />}
+                  <span>{isSaved ? 'Saved!' : 'Save for Later'}</span>
                 </button>
-                <button className="w-full btn-secondary py-3 flex items-center justify-center space-x-2">
+
+                <button
+                  onClick={handleShare}
+                  className="w-full btn-secondary py-3 flex items-center justify-center space-x-2"
+                >
                   <Share2 className="w-5 h-5" />
                   <span>Share Event</span>
                 </button>
               </div>
 
               {/* Premium Upsell */}
-              <div className="mt-6 p-4 bg-gradient-to-br from-primary-50 to-primary-100 rounded-lg border border-primary-200">
-                <div className="flex items-center space-x-2 mb-2">
-                  <TrendingUp className="w-5 h-5 text-primary-600" />
-                  <span className="font-bold text-gray-900">Premium Member Benefit</span>
+              {(!user || user.membership_tier === 'free') && (
+                <div className="mt-6 p-4 bg-gradient-to-br from-primary-50 to-primary-100 rounded-lg border border-primary-200">
+                  <div className="flex items-center space-x-2 mb-2">
+                    <TrendingUp className="w-5 h-5 text-primary-600" />
+                    <span className="font-bold text-gray-900">Premium Member Benefit</span>
+                  </div>
+                  <p className="text-sm text-gray-700 mb-3">
+                    Get early access to high-demand events like this one. Upgrade to Premium today!
+                  </p>
+                  <Link to="/profile" className="text-sm text-primary-600 font-semibold hover:underline">
+                    Upgrade now →
+                  </Link>
                 </div>
-                <p className="text-sm text-gray-700">
-                  Get early access to high-demand events like this one. Upgrade to Premium today!
-                </p>
-              </div>
+              )}
             </div>
           </div>
         </div>
