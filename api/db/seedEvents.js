@@ -1,260 +1,277 @@
-import type { Event } from '../types';
-
-export const mockEvents: Event[] = [
+module.exports = [
   {
     id: '1', title: 'Indie Night at Neumos',
     description: "Experience Seattle's hottest indie bands in Capitol Hill's iconic music venue. Three local acts plus special guest DJ.",
     organizerId: 'org1', organizerName: 'Neumos',
-    venue: { id: 'v1', name: 'Neumos', address: '925 E Pike St', neighborhood: 'Capitol Hill', location: { lat: 47.6145, lng: -122.3195 } },
+    venueId: 'v1', venueName: 'Neumos', venueAddress: '925 E Pike St',
+    venueNeighborhood: 'Capitol Hill', venueLat: 47.6145, venueLng: -122.3195,
     startTime: '2026-05-17T20:00:00', endTime: '2026-05-18T01:00:00',
     category: 'music', price: 25, capacity: 400, ticketsSold: 342, fomoScore: 87,
     imageUrl: 'https://images.unsplash.com/photo-1470229722913-7c0e2dbbafd3?w=800',
-    tags: ['indie', 'live-music', '21+', 'late-night'], attendees: 342, friendsGoing: 5
+    tags: JSON.stringify(['indie', 'live-music', '21+', 'late-night']), attendees: 342
   },
   {
     id: '2', title: 'Pike Place Food Tour',
     description: 'Guided culinary journey through Pike Place Market. Sample 10+ local favorites from seafood to pastries.',
     organizerId: 'org2', organizerName: 'Seattle Food Tours',
-    venue: { id: 'v2', name: 'Pike Place Market', address: '85 Pike St', neighborhood: 'Downtown', location: { lat: 47.6097, lng: -122.3425 } },
+    venueId: 'v2', venueName: 'Pike Place Market', venueAddress: '85 Pike St',
+    venueNeighborhood: 'Downtown', venueLat: 47.6097, venueLng: -122.3425,
     startTime: '2026-05-10T10:00:00', endTime: '2026-05-10T13:00:00',
     category: 'food-drink', price: 75, capacity: 15, ticketsSold: 14, fomoScore: 92,
     imageUrl: 'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=800',
-    tags: ['food-tour', 'local', 'market'], attendees: 14, friendsGoing: 2
+    tags: JSON.stringify(['food-tour', 'local', 'market']), attendees: 14
   },
   {
     id: '3', title: 'Fremont Friday Night Art Walk',
     description: 'Explore 15+ galleries and artist studios in quirky Fremont. Free admission, wine and snacks at each stop.',
     organizerId: 'org3', organizerName: 'Fremont Arts Council',
-    venue: { id: 'v3', name: 'Fremont Arts District', address: 'N 35th St & Fremont Ave N', neighborhood: 'Fremont', location: { lat: 47.6505, lng: -122.3493 } },
+    venueId: 'v3', venueName: 'Fremont Arts District', venueAddress: 'N 35th St & Fremont Ave N',
+    venueNeighborhood: 'Fremont', venueLat: 47.6505, venueLng: -122.3493,
     startTime: '2026-05-15T18:00:00', endTime: '2026-05-15T22:00:00',
     category: 'arts-culture', price: 0, capacity: 500, ticketsSold: 287, fomoScore: 68,
     imageUrl: 'https://images.unsplash.com/photo-1561214115-f2f134cc4912?w=800',
-    tags: ['art', 'free', 'walkable', 'family-friendly'], attendees: 287, friendsGoing: 3
+    tags: JSON.stringify(['art', 'free', 'walkable', 'family-friendly']), attendees: 287
   },
   {
     id: '4', title: 'Sounders FC Watch Party',
     description: 'Join fellow fans at Fuel Sports for the season opener. Drink specials, prizes, and the best atmosphere in Seattle.',
     organizerId: 'org4', organizerName: 'Emerald City Supporters',
-    venue: { id: 'v4', name: 'Fuel Sports Eats & Beats', address: '1st Ave S', neighborhood: 'SODO', location: { lat: 47.5915, lng: -122.3271 } },
+    venueId: 'v4', venueName: 'Fuel Sports Eats & Beats', venueAddress: '1st Ave S',
+    venueNeighborhood: 'SODO', venueLat: 47.5915, venueLng: -122.3271,
     startTime: '2026-05-19T14:00:00', endTime: '2026-05-19T17:00:00',
     category: 'sports-fitness', price: 0, capacity: 200, ticketsSold: 156, fomoScore: 74,
     imageUrl: 'https://images.unsplash.com/photo-1508098682722-e99c43a406b2?w=800',
-    tags: ['soccer', 'sports', 'free', 'bar'], attendees: 156, friendsGoing: 8
+    tags: JSON.stringify(['soccer', 'sports', 'free', 'bar']), attendees: 156
   },
   {
     id: '5', title: 'Tech Startup Networking Mixer',
     description: "Connect with Seattle's tech community. VCs, founders, and engineers gathering for drinks and conversation.",
     organizerId: 'org5', organizerName: 'Seattle Tech Network',
-    venue: { id: 'v5', name: 'Mox Boarding House', address: '5105 Leary Ave NW', neighborhood: 'Ballard', location: { lat: 47.6661, lng: -122.3825 } },
+    venueId: 'v5', venueName: 'Mox Boarding House', venueAddress: '5105 Leary Ave NW',
+    venueNeighborhood: 'Ballard', venueLat: 47.6661, venueLng: -122.3825,
     startTime: '2026-05-22T18:30:00', endTime: '2026-05-22T21:00:00',
     category: 'networking', price: 15, capacity: 100, ticketsSold: 94, fomoScore: 82,
     imageUrl: 'https://images.unsplash.com/photo-1511795409834-ef04bbd61622?w=800',
-    tags: ['tech', 'networking', 'professional', '21+'], attendees: 94, friendsGoing: 7
+    tags: JSON.stringify(['tech', 'networking', 'professional', '21+']), attendees: 94
   },
   {
     id: '6', title: 'Sunset Yoga at Kerry Park',
     description: 'All-levels yoga class with stunning skyline views. Bring your mat and watch the sunset over Elliott Bay.',
     organizerId: 'org6', organizerName: 'Seattle Outdoor Yoga',
-    venue: { id: 'v6', name: 'Kerry Park', address: '211 W Highland Dr', neighborhood: 'Queen Anne', location: { lat: 47.6295, lng: -122.3598 } },
+    venueId: 'v6', venueName: 'Kerry Park', venueAddress: '211 W Highland Dr',
+    venueNeighborhood: 'Queen Anne', venueLat: 47.6295, venueLng: -122.3598,
     startTime: '2026-05-20T18:00:00', endTime: '2026-05-20T19:15:00',
     category: 'sports-fitness', price: 20, capacity: 50, ticketsSold: 48, fomoScore: 71,
     imageUrl: 'https://images.unsplash.com/photo-1506126613408-eca07ce68773?w=800',
-    tags: ['yoga', 'outdoor', 'sunset', 'wellness'], attendees: 48, friendsGoing: 1
+    tags: JSON.stringify(['yoga', 'outdoor', 'sunset', 'wellness']), attendees: 48
   },
   {
     id: '7', title: 'Craft Beer & Trivia Night',
     description: 'Test your knowledge while sampling local brews. Teams of 4-6, prizes for top 3 teams.',
     organizerId: 'org7', organizerName: 'Fremont Brewing',
-    venue: { id: 'v7', name: 'Fremont Brewing Urban Beer Garden', address: '1050 N 34th St', neighborhood: 'Fremont', location: { lat: 47.6488, lng: -122.3467 } },
+    venueId: 'v7', venueName: 'Fremont Brewing Urban Beer Garden', venueAddress: '1050 N 34th St',
+    venueNeighborhood: 'Fremont', venueLat: 47.6488, venueLng: -122.3467,
     startTime: '2026-05-14T19:00:00', endTime: '2026-05-14T22:00:00',
     category: 'nightlife', price: 0, capacity: 120, ticketsSold: 86, fomoScore: 58,
     imageUrl: 'https://images.unsplash.com/photo-1436076863939-06870fe779c2?w=800',
-    tags: ['trivia', 'beer', 'free', 'team-event'], attendees: 86, friendsGoing: 4
+    tags: JSON.stringify(['trivia', 'beer', 'free', 'team-event']), attendees: 86
   },
   {
     id: '8', title: 'Introduction to Mixology Workshop',
     description: 'Learn to craft 5 classic cocktails from a professional bartender. All ingredients and tools provided.',
     organizerId: 'org8', organizerName: 'Seattle Mixology School',
-    venue: { id: 'v8', name: 'Canon', address: '928 12th Ave', neighborhood: 'Capitol Hill', location: { lat: 47.6074, lng: -122.3178 } },
+    venueId: 'v8', venueName: 'Canon', venueAddress: '928 12th Ave',
+    venueNeighborhood: 'Capitol Hill', venueLat: 47.6074, venueLng: -122.3178,
     startTime: '2026-05-25T19:00:00', endTime: '2026-05-25T21:30:00',
     category: 'learning', price: 85, capacity: 16, ticketsSold: 13, fomoScore: 65,
     imageUrl: 'https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?w=800',
-    tags: ['cocktails', 'class', 'hands-on', '21+'], attendees: 13, friendsGoing: 0
+    tags: JSON.stringify(['cocktails', 'class', 'hands-on', '21+']), attendees: 13
   },
   {
     id: '9', title: 'Electronic Music Showcase',
     description: 'Four DJs spinning house, techno, and ambient. Immersive lighting and visuals in an intimate warehouse space.',
     organizerId: 'org9', organizerName: 'Underground Events Seattle',
-    venue: { id: 'v9', name: 'The Warehouse', address: 'Georgetown (exact address upon RSVP)', neighborhood: 'Georgetown', location: { lat: 47.5584, lng: -122.3213 } },
+    venueId: 'v9', venueName: 'The Warehouse', venueAddress: 'Georgetown (exact address upon RSVP)',
+    venueNeighborhood: 'Georgetown', venueLat: 47.5584, venueLng: -122.3213,
     startTime: '2026-05-16T22:00:00', endTime: '2026-05-17T04:00:00',
     category: 'nightlife', price: 30, capacity: 250, ticketsSold: 198, fomoScore: 79,
     imageUrl: 'https://images.unsplash.com/photo-1571266028243-d220c8b6fea4?w=800',
-    tags: ['electronic', 'dj', 'late-night', '21+', 'dance'], attendees: 198, friendsGoing: 6
+    tags: JSON.stringify(['electronic', 'dj', 'late-night', '21+', 'dance']), attendees: 198
   },
   {
     id: '10', title: 'Community Garden Volunteer Day',
     description: 'Help maintain the Ballard P-Patch. All ages welcome. Coffee and pastries provided.',
     organizerId: 'org10', organizerName: 'Ballard P-Patch',
-    venue: { id: 'v10', name: 'Ballard P-Patch Community Garden', address: '8560 25th Ave NW', neighborhood: 'Ballard', location: { lat: 47.6896, lng: -122.3837 } },
+    venueId: 'v10', venueName: 'Ballard P-Patch Community Garden', venueAddress: '8560 25th Ave NW',
+    venueNeighborhood: 'Ballard', venueLat: 47.6896, venueLng: -122.3837,
     startTime: '2026-05-11T09:00:00', endTime: '2026-05-11T12:00:00',
     category: 'community', price: 0, capacity: 30, ticketsSold: 22, fomoScore: 42,
     imageUrl: 'https://images.unsplash.com/photo-1592423619508-61bad43b7cd8?w=800',
-    tags: ['volunteer', 'gardening', 'free', 'family-friendly'], attendees: 22, friendsGoing: 1
+    tags: JSON.stringify(['volunteer', 'gardening', 'free', 'family-friendly']), attendees: 22
   },
   {
     id: '11', title: 'Capitol Hill Block Party Preview',
     description: 'Preview show for the upcoming block party season featuring 6 emerging local artists across 2 stages.',
     organizerId: 'org11', organizerName: 'CHBP Productions',
-    venue: { id: 'v11', name: 'Cal Anderson Park', address: '1635 11th Ave', neighborhood: 'Capitol Hill', location: { lat: 47.6167, lng: -122.3182 } },
+    venueId: 'v11', venueName: 'Cal Anderson Park', venueAddress: '1635 11th Ave',
+    venueNeighborhood: 'Capitol Hill', venueLat: 47.6167, venueLng: -122.3182,
     startTime: '2026-05-23T14:00:00', endTime: '2026-05-23T22:00:00',
     category: 'music', price: 35, capacity: 600, ticketsSold: 510, fomoScore: 85,
     imageUrl: 'https://images.unsplash.com/photo-1501386761578-eaa54b4e01ef?w=800',
-    tags: ['festival', 'outdoor', 'all-ages', 'local-artists'], attendees: 510, friendsGoing: 9
+    tags: JSON.stringify(['festival', 'outdoor', 'all-ages', 'local-artists']), attendees: 510
   },
   {
     id: '12', title: 'Ramen Popup at Ooink',
     description: 'Limited-seating ramen pop-up featuring three experimental broths from a Michelin-recognized chef.',
     organizerId: 'org12', organizerName: 'Ooink Kitchen',
-    venue: { id: 'v12', name: 'Ooink', address: '1425 Broadway E', neighborhood: 'Capitol Hill', location: { lat: 47.6213, lng: -122.3195 } },
+    venueId: 'v12', venueName: 'Ooink', venueAddress: '1425 Broadway E',
+    venueNeighborhood: 'Capitol Hill', venueLat: 47.6213, venueLng: -122.3195,
     startTime: '2026-05-13T17:00:00', endTime: '2026-05-13T21:00:00',
     category: 'food-drink', price: 55, capacity: 20, ticketsSold: 19, fomoScore: 96,
     imageUrl: 'https://images.unsplash.com/photo-1569050467447-ce54b3bbc37d?w=800',
-    tags: ['ramen', 'popup', 'chef', 'limited-seats'], attendees: 19, friendsGoing: 3
+    tags: JSON.stringify(['ramen', 'popup', 'chef', 'limited-seats']), attendees: 19
   },
   {
     id: '13', title: 'Salsa & Latin Dance Night',
     description: 'Beginner lesson at 8pm followed by open social dancing until midnight. Live band plays mambo, cumbia, and salsa.',
     organizerId: 'org13', organizerName: 'Seattle Latin Dance',
-    venue: { id: 'v13', name: 'Century Ballroom', address: '915 E Pine St', neighborhood: 'Capitol Hill', location: { lat: 47.6148, lng: -122.3213 } },
+    venueId: 'v13', venueName: 'Century Ballroom', venueAddress: '915 E Pine St',
+    venueNeighborhood: 'Capitol Hill', venueLat: 47.6148, venueLng: -122.3213,
     startTime: '2026-05-24T20:00:00', endTime: '2026-05-25T00:00:00',
     category: 'nightlife', price: 18, capacity: 180, ticketsSold: 134, fomoScore: 73,
     imageUrl: 'https://images.unsplash.com/photo-1504609813442-a8924e83f76e?w=800',
-    tags: ['dance', 'salsa', 'live-band', '18+'], attendees: 134, friendsGoing: 2
+    tags: JSON.stringify(['dance', 'salsa', 'live-band', '18+']), attendees: 134
   },
   {
     id: '14', title: 'Olympic Sculpture Park Morning Run',
     description: '5K group run along the waterfront starting at the sculpture park. All paces welcome, coffee at the finish.',
     organizerId: 'org14', organizerName: 'Seattle Running Club',
-    venue: { id: 'v14', name: 'Olympic Sculpture Park', address: '2901 Western Ave', neighborhood: 'Belltown', location: { lat: 47.6162, lng: -122.3565 } },
+    venueId: 'v14', venueName: 'Olympic Sculpture Park', venueAddress: '2901 Western Ave',
+    venueNeighborhood: 'Belltown', venueLat: 47.6162, venueLng: -122.3565,
     startTime: '2026-05-12T07:30:00', endTime: '2026-05-12T09:00:00',
     category: 'sports-fitness', price: 0, capacity: 80, ticketsSold: 53, fomoScore: 55,
     imageUrl: 'https://images.unsplash.com/photo-1530143311094-34d807799e8f?w=800',
-    tags: ['running', 'outdoor', 'free', 'morning'], attendees: 53, friendsGoing: 0
+    tags: JSON.stringify(['running', 'outdoor', 'free', 'morning']), attendees: 53
   },
   {
     id: '15', title: 'Seattle Art Museum Members Night',
     description: 'Exclusive after-hours access to the new Pacific Northwest exhibition. Wine reception and artist talk included.',
     organizerId: 'org15', organizerName: 'Seattle Art Museum',
-    venue: { id: 'v15', name: 'Seattle Art Museum', address: '1300 1st Ave', neighborhood: 'Downtown', location: { lat: 47.6073, lng: -122.3382 } },
+    venueId: 'v15', venueName: 'Seattle Art Museum', venueAddress: '1300 1st Ave',
+    venueNeighborhood: 'Downtown', venueLat: 47.6073, venueLng: -122.3382,
     startTime: '2026-05-21T18:30:00', endTime: '2026-05-21T21:30:00',
     category: 'arts-culture', price: 45, capacity: 120, ticketsSold: 98, fomoScore: 77,
     imageUrl: 'https://images.unsplash.com/photo-1578926375605-eaf7559b1458?w=800',
-    tags: ['museum', 'art', 'wine-reception'], attendees: 98, friendsGoing: 1
+    tags: JSON.stringify(['museum', 'art', 'members', 'wine-reception']), attendees: 98
   },
   {
     id: '16', title: 'Ballard Farmers Market Chef Demo',
     description: "Top Seattle chefs cook live using ingredients sourced from the market. Taste samples and take home recipes.",
     organizerId: 'org16', organizerName: 'Ballard Farmers Market',
-    venue: { id: 'v16', name: 'Ballard Sunday Market', address: 'Ballard Ave NW & Vernon Pl', neighborhood: 'Ballard', location: { lat: 47.6657, lng: -122.3838 } },
+    venueId: 'v16', venueName: 'Ballard Sunday Market', venueAddress: 'Ballard Ave NW & Vernon Pl',
+    venueNeighborhood: 'Ballard', venueLat: 47.6657, venueLng: -122.3838,
     startTime: '2026-05-18T10:00:00', endTime: '2026-05-18T13:00:00',
     category: 'food-drink', price: 0, capacity: 200, ticketsSold: 87, fomoScore: 48,
     imageUrl: 'https://images.unsplash.com/photo-1488459716781-31db52582fe9?w=800',
-    tags: ['farmers-market', 'cooking', 'free', 'outdoor'], attendees: 87, friendsGoing: 0
+    tags: JSON.stringify(['farmers-market', 'cooking', 'free', 'outdoor']), attendees: 87
   },
   {
     id: '17', title: 'UW Astronomy Public Night',
     description: "View Saturn's rings through the Manastash Ridge Observatory's 30-inch telescope. Expert astronomers guide the experience.",
     organizerId: 'org17', organizerName: 'UW Astronomy Department',
-    venue: { id: 'v17', name: 'UW Physics & Astronomy Building', address: '3910 15th Ave NE', neighborhood: 'University District', location: { lat: 47.6534, lng: -122.3117 } },
+    venueId: 'v17', venueName: 'UW Physics & Astronomy Building', venueAddress: '3910 15th Ave NE',
+    venueNeighborhood: 'University District', venueLat: 47.6534, venueLng: -122.3117,
     startTime: '2026-05-28T21:00:00', endTime: '2026-05-28T23:30:00',
     category: 'learning', price: 10, capacity: 40, ticketsSold: 38, fomoScore: 88,
     imageUrl: 'https://images.unsplash.com/photo-1446776811953-b23d57bd21aa?w=800',
-    tags: ['astronomy', 'science', 'outdoor', 'educational'], attendees: 38, friendsGoing: 2
+    tags: JSON.stringify(['astronomy', 'science', 'outdoor', 'educational']), attendees: 38
   },
   {
     id: '18', title: 'Pioneer Square Gallery Hop',
     description: 'Self-guided tour of 8 galleries on First Thursday. Art, wine, and conversation in historic Pioneer Square.',
     organizerId: 'org18', organizerName: 'Pioneer Square Art Walk',
-    venue: { id: 'v18', name: 'Pioneer Square Art District', address: 'S Main St & 1st Ave S', neighborhood: 'Pioneer Square', location: { lat: 47.5985, lng: -122.3327 } },
+    venueId: 'v18', venueName: 'Pioneer Square Art District', venueAddress: 'S Main St & 1st Ave S',
+    venueNeighborhood: 'Pioneer Square', venueLat: 47.5985, venueLng: -122.3327,
     startTime: '2026-05-07T17:00:00', endTime: '2026-05-07T21:00:00',
     category: 'arts-culture', price: 0, capacity: 1000, ticketsSold: 412, fomoScore: 53,
     imageUrl: 'https://images.unsplash.com/photo-1531243269054-5ebf6f34081e?w=800',
-    tags: ['art', 'gallery', 'free', 'historic-district'], attendees: 412, friendsGoing: 0
+    tags: JSON.stringify(['art', 'gallery', 'free', 'historic-district']), attendees: 412
   },
   {
     id: '19', title: 'Lake Union Paddleboard Sunset',
     description: 'Guided SUP tour of Lake Union at golden hour. Equipment included, no experience necessary. Limited to 12 participants.',
     organizerId: 'org19', organizerName: 'Seattle SUP',
-    venue: { id: 'v19', name: 'South Lake Union Park', address: '680 Terry Ave N', neighborhood: 'South Lake Union', location: { lat: 47.6265, lng: -122.3361 } },
+    venueId: 'v19', venueName: 'South Lake Union Park', venueAddress: '680 Terry Ave N',
+    venueNeighborhood: 'South Lake Union', venueLat: 47.6265, venueLng: -122.3361,
     startTime: '2026-05-26T18:30:00', endTime: '2026-05-26T20:30:00',
     category: 'sports-fitness', price: 65, capacity: 12, ticketsSold: 11, fomoScore: 94,
     imageUrl: 'https://images.unsplash.com/photo-1502680390469-be75c86b636f?w=800',
-    tags: ['paddleboard', 'lake', 'outdoor', 'limited'], attendees: 11, friendsGoing: 1
+    tags: JSON.stringify(['paddleboard', 'lake', 'outdoor', 'limited']), attendees: 11
   },
   {
     id: '20', title: 'Capitol Hill Creative Writing Salon',
-    description: 'Share your work, get feedback, and meet fellow writers. Fiction, poetry, and essays all welcome.',
+    description: 'Share your work, get feedback, and meet fellow writers. Fiction, poetry, and essays all welcome. Hosted at an indie bookshop.',
     organizerId: 'org20', organizerName: 'Seattle Writers Collective',
-    venue: { id: 'v20', name: "Ada's Technical Books & Cafe", address: '425 15th Ave E', neighborhood: 'Capitol Hill', location: { lat: 47.6222, lng: -122.3103 } },
+    venueId: 'v20', venueName: 'Ada\'s Technical Books & Cafe', venueAddress: '425 15th Ave E',
+    venueNeighborhood: 'Capitol Hill', venueLat: 47.6222, venueLng: -122.3103,
     startTime: '2026-05-29T19:00:00', endTime: '2026-05-29T21:00:00',
     category: 'learning', price: 0, capacity: 25, ticketsSold: 21, fomoScore: 62,
     imageUrl: 'https://images.unsplash.com/photo-1455390582262-044cdead277a?w=800',
-    tags: ['writing', 'creative', 'free', 'community'], attendees: 21, friendsGoing: 0
+    tags: JSON.stringify(['writing', 'creative', 'free', 'community']), attendees: 21
   },
   {
     id: '21', title: 'Eastside Wine & Cheese Tasting',
     description: 'Curated flight of 6 Washington state wines paired with artisanal cheeses. Sommelier-led education included.',
     organizerId: 'org21', organizerName: 'Washington Wine Society',
-    venue: { id: 'v21', name: 'Purple Cafe', address: '323 Park Pl Center', neighborhood: 'Kirkland', location: { lat: 47.6706, lng: -122.2101 } },
+    venueId: 'v21', venueName: 'Purple Cafe', venueAddress: '323 Park Pl Center',
+    venueNeighborhood: 'Kirkland', venueLat: 47.6706, venueLng: -122.2101,
     startTime: '2026-05-30T18:00:00', endTime: '2026-05-30T20:30:00',
     category: 'food-drink', price: 65, capacity: 30, ticketsSold: 24, fomoScore: 66,
     imageUrl: 'https://images.unsplash.com/photo-1510812431401-41d2bd2722f3?w=800',
-    tags: ['wine', 'cheese', 'tasting', 'eastside'], attendees: 24, friendsGoing: 0
+    tags: JSON.stringify(['wine', 'cheese', 'tasting', 'eastside']), attendees: 24
   },
   {
     id: '22', title: 'Rainier Beach Community Cookout',
     description: "Annual neighborhood cookout at the beach. Live music, games, kids zone, and food from 10 local vendors.",
     organizerId: 'org22', organizerName: 'Rainier Beach Action Coalition',
-    venue: { id: 'v22', name: 'Rainier Beach Playfield', address: '7701 Rainier Ave S', neighborhood: 'Rainier Beach', location: { lat: 47.5142, lng: -122.2717 } },
+    venueId: 'v22', venueName: 'Rainier Beach Playfield', venueAddress: '7701 Rainier Ave S',
+    venueNeighborhood: 'Rainier Beach', venueLat: 47.5142, venueLng: -122.2717,
     startTime: '2026-05-31T12:00:00', endTime: '2026-05-31T18:00:00',
     category: 'community', price: 0, capacity: 500, ticketsSold: 230, fomoScore: 57,
     imageUrl: 'https://images.unsplash.com/photo-1529543544282-ea669407fca3?w=800',
-    tags: ['community', 'family', 'free', 'food', 'music'], attendees: 230, friendsGoing: 0
+    tags: JSON.stringify(['community', 'family', 'free', 'food', 'music']), attendees: 230
   },
   {
     id: '23', title: 'Improv Comedy Night: New Voices',
     description: "Seattle's top improv teams showcase new material. Audience participation encouraged. Two drink minimum.",
     organizerId: 'org23', organizerName: 'Seattle Improv',
-    venue: { id: 'v23', name: 'Comedy Underground', address: '222 S Main St', neighborhood: 'Pioneer Square', location: { lat: 47.5998, lng: -122.3323 } },
+    venueId: 'v23', venueName: 'Comedy Underground', venueAddress: '222 S Main St',
+    venueNeighborhood: 'Pioneer Square', venueLat: 47.5998, venueLng: -122.3323,
     startTime: '2026-05-09T20:00:00', endTime: '2026-05-09T22:30:00',
     category: 'arts-culture', price: 20, capacity: 90, ticketsSold: 72, fomoScore: 69,
     imageUrl: 'https://images.unsplash.com/photo-1585699324551-f6c309eedeca?w=800',
-    tags: ['comedy', 'improv', '21+', 'interactive'], attendees: 72, friendsGoing: 2
+    tags: JSON.stringify(['comedy', 'improv', '21+', 'interactive']), attendees: 72
   },
   {
     id: '24', title: 'Eastlake Boat Parade & Dock Party',
     description: 'Watch decorated boats cruise Lake Union from a private dock. Open bar, catered bites, and stunning views.',
     organizerId: 'org24', organizerName: 'Eastlake Community Association',
-    venue: { id: 'v24', name: 'Eastlake Dock', address: '2504 Eastlake Ave E', neighborhood: 'Eastlake', location: { lat: 47.6406, lng: -122.3285 } },
+    venueId: 'v24', venueName: 'Eastlake Dock', venueAddress: '2504 Eastlake Ave E',
+    venueNeighborhood: 'Eastlake', venueLat: 47.6406, venueLng: -122.3285,
     startTime: '2026-06-04T17:00:00', endTime: '2026-06-04T21:00:00',
     category: 'community', price: 40, capacity: 60, ticketsSold: 44, fomoScore: 76,
     imageUrl: 'https://images.unsplash.com/photo-1467348733814-f9e56a0dc3f7?w=800',
-    tags: ['waterfront', 'outdoor', 'views', '21+'], attendees: 44, friendsGoing: 3
+    tags: JSON.stringify(['waterfront', 'outdoor', 'views', '21+']), attendees: 44
   },
   {
     id: '25', title: 'Fremont Solstice Parade Warm-Up Party',
     description: "Pre-parade bash with local DJs, face painting, and costume accessories. Celebrate Seattle's most beloved weird tradition.",
     organizerId: 'org25', organizerName: 'Fremont Arts Council',
-    venue: { id: 'v25', name: 'Fremont Outdoor Cinema', address: 'N 35th & Phinney Ave N', neighborhood: 'Fremont', location: { lat: 47.6508, lng: -122.3503 } },
+    venueId: 'v25', venueName: 'Fremont Outdoor Cinema', venueAddress: 'N 35th & Phinney Ave N',
+    venueNeighborhood: 'Fremont', venueLat: 47.6508, venueLng: -122.3503,
     startTime: '2026-06-05T15:00:00', endTime: '2026-06-05T22:00:00',
     category: 'community', price: 10, capacity: 300, ticketsSold: 198, fomoScore: 83,
     imageUrl: 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=800',
-    tags: ['solstice', 'parade', 'fremont', 'costume', 'outdoor'], attendees: 198, friendsGoing: 4
+    tags: JSON.stringify(['solstice', 'parade', 'fremont', 'costume', 'outdoor']), attendees: 198
   }
-];
-
-export const NEIGHBORHOODS = [
-  'Ballard', 'Belltown', 'Capitol Hill', 'Downtown', 'Eastlake',
-  'Fremont', 'Georgetown', 'Kirkland', 'Pioneer Square', 'Queen Anne',
-  'Rainier Beach', 'SODO', 'South Lake Union', 'University District'
 ];
