@@ -1,7 +1,51 @@
 const express = require('express');
 const bcrypt = require('bcryptjs');
+const crypto = require('crypto');
+const nodemailer = require('nodemailer');
 const { getDb } = require('../db');
 const { signToken, requireAuth } = require('../middleware/auth');
+
+const MAGIC_LINK_TTL_MINUTES = 15;
+const CLIENT_URL = process.env.CLIENT_URL || 'http://localhost:5173';
+
+function makeTransport() {
+  const { SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS } = process.env;
+  if (!SMTP_HOST || !SMTP_USER) return null;
+  return nodemailer.createTransport({
+    host: SMTP_HOST,
+    port: Number(SMTP_PORT) || 587,
+    secure: Number(SMTP_PORT) === 465,
+    auth: { user: SMTP_USER, pass: SMTP_PASS }
+  });
+}
+
+async function sendMagicLinkEmail(to, magicUrl) {
+  const transport = makeTransport();
+  const from = process.env.SMTP_FROM || process.env.SMTP_USER || 'noreply@seattlesocial.com';
+
+  if (!transport) {
+    // Demo mode — log to console so developers can click the link
+    console.log(`\n🔗 MAGIC LINK (demo — no SMTP configured):\n   ${magicUrl}\n`);
+    return { demo: true, url: magicUrl };
+  }
+
+  await transport.sendMail({
+    from: `"SeattleSocial 🔥" <${from}>`,
+    to,
+    subject: 'Your SeattleSocial sign-in link',
+    text: `Click this link to sign in (expires in ${MAGIC_LINK_TTL_MINUTES} minutes):\n\n${magicUrl}\n\nIf you didn't request this, you can safely ignore this email.`,
+    html: `
+      <div style="font-family:sans-serif;max-width:480px;margin:auto;padding:32px">
+        <div style="font-size:32px;margin-bottom:8px">🔥</div>
+        <h2 style="margin:0 0 8px;color:#111">Your sign-in link</h2>
+        <p style="color:#555;margin:0 0 24px">Click the button below to sign in to SeattleSocial. The link expires in ${MAGIC_LINK_TTL_MINUTES} minutes.</p>
+        <a href="${magicUrl}" style="display:inline-block;background:#0284c7;color:#fff;text-decoration:none;padding:14px 28px;border-radius:8px;font-weight:600;font-size:16px">Sign in to SeattleSocial</a>
+        <p style="color:#999;font-size:12px;margin-top:24px">If you didn't request this, you can safely ignore this email.</p>
+      </div>
+    `
+  });
+  return { demo: false };
+}
 
 const router = express.Router();
 
@@ -62,6 +106,84 @@ router.get('/me', requireAuth, (req, res) => {
   if (!user) return res.status(404).json({ error: 'User not found' });
   user.interests = JSON.parse(user.interests || '[]');
   res.json({ user });
+});
+
+// POST /auth/magic-link/send
+router.post('/magic-link/send', async (req, res) => {
+  const { email } = req.body;
+  if (!email || !email.includes('@')) {
+    return res.status(400).json({ error: 'A valid email address is required' });
+  }
+
+  const db = getDb();
+  const normalizedEmail = email.toLowerCase().trim();
+
+  // Rate-limit: at most one token per minute per email
+  const recent = db.prepare(
+    "SELECT id FROM magic_links WHERE email = ? AND created_at > datetime('now', '-1 minute') AND used = 0"
+  ).get(normalizedEmail);
+  if (recent) {
+    return res.status(429).json({ error: 'A link was already sent recently. Please wait a minute and try again.' });
+  }
+
+  // Invalidate any prior unused tokens for this email
+  db.prepare("UPDATE magic_links SET used = 1 WHERE email = ? AND used = 0").run(normalizedEmail);
+
+  const token = crypto.randomBytes(32).toString('hex');
+  const expiresAt = new Date(Date.now() + MAGIC_LINK_TTL_MINUTES * 60 * 1000).toISOString();
+
+  db.prepare('INSERT INTO magic_links (token, email, expires_at) VALUES (?, ?, ?)').run(token, normalizedEmail, expiresAt);
+
+  const magicUrl = `${CLIENT_URL}/auth/verify?token=${token}`;
+
+  try {
+    const result = await sendMagicLinkEmail(normalizedEmail, magicUrl);
+    res.json({
+      message: `Check your email — a sign-in link is on its way to ${normalizedEmail}.`,
+      // Only expose the URL in demo mode so developers can test without SMTP
+      ...(result.demo ? { demoUrl: magicUrl } : {})
+    });
+  } catch (err) {
+    console.error('Email send error:', err);
+    res.status(500).json({ error: 'Failed to send email. Please try again.' });
+  }
+});
+
+// GET /auth/magic-link/verify?token=xxx
+router.get('/magic-link/verify', (req, res) => {
+  const { token } = req.query;
+  if (!token || typeof token !== 'string') {
+    return res.status(400).json({ error: 'Token is required' });
+  }
+
+  const db = getDb();
+  const link = db.prepare('SELECT * FROM magic_links WHERE token = ?').get(token);
+
+  if (!link) return res.status(400).json({ error: 'Invalid or expired sign-in link' });
+  if (link.used) return res.status(400).json({ error: 'This link has already been used' });
+  if (new Date(link.expires_at) < new Date()) {
+    return res.status(400).json({ error: 'This sign-in link has expired. Please request a new one.' });
+  }
+
+  // Mark the token as used immediately (prevents replay)
+  db.prepare('UPDATE magic_links SET used = 1 WHERE id = ?').run(link.id);
+
+  // Find or create the user (magic link = passwordless sign-up)
+  let user = db.prepare('SELECT * FROM users WHERE email = ?').get(link.email);
+  if (!user) {
+    // New user — derive a default name from the email local part
+    const defaultName = link.email.split('@')[0].replace(/[._-]/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+    const result = db.prepare(
+      "INSERT INTO users (email, password_hash, name) VALUES (?, '__magic_link__', ?)"
+    ).run(link.email, defaultName);
+    user = db.prepare('SELECT * FROM users WHERE id = ?').get(result.lastInsertRowid);
+  }
+
+  const jwtToken = signToken({ id: user.id, email: user.email });
+  const { password_hash, ...safeUser } = user;
+  safeUser.interests = JSON.parse(safeUser.interests || '[]');
+
+  res.json({ token: jwtToken, user: safeUser, isNewUser: user.events_attended === 0 });
 });
 
 module.exports = router;

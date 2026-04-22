@@ -24,7 +24,11 @@ export const api = {
       request<{ token: string; user: AppUser }>('/auth/register', { method: 'POST', body: JSON.stringify(body) }),
     login: (body: { email: string; password: string }) =>
       request<{ token: string; user: AppUser }>('/auth/login', { method: 'POST', body: JSON.stringify(body) }),
-    me: () => request<{ user: AppUser }>('/auth/me')
+    me: () => request<{ user: AppUser }>('/auth/me'),
+    sendMagicLink: (email: string) =>
+      request<{ message: string; demoUrl?: string }>('/auth/magic-link/send', { method: 'POST', body: JSON.stringify({ email }) }),
+    verifyMagicLink: (token: string) =>
+      request<{ token: string; user: AppUser; isNewUser: boolean }>(`/auth/magic-link/verify?token=${encodeURIComponent(token)}`)
   },
   events: {
     list: (params?: Record<string, string>) => {

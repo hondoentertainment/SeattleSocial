@@ -7,6 +7,7 @@ import CalendarPage from './pages/CalendarPage';
 import NotificationsPage from './pages/NotificationsPage';
 import ProfilePage from './pages/ProfilePage';
 import OrganizerDashboard from './pages/OrganizerDashboard';
+import MagicLinkVerifyPage from './pages/MagicLinkVerifyPage';
 
 function App() {
   return (
@@ -22,6 +23,7 @@ function App() {
             <Route path="/notifications" element={<NotificationsPage />} />
             <Route path="/profile" element={<ProfilePage />} />
             <Route path="/organizer" element={<OrganizerDashboard />} />
+            <Route path="/auth/verify" element={<MagicLinkVerifyPage />} />
           </Routes>
         </div>
       </Router>
