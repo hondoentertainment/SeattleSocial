@@ -12,12 +12,13 @@ export default function CalendarPage() {
   const [loading, setLoading] = useState(true);
   const [showAuth, setShowAuth] = useState(false);
   const [cancelling, setCancelling] = useState<string | null>(null);
+  const [loadError, setLoadError] = useState('');
 
   useEffect(() => {
     if (!user) { setLoading(false); return; }
     api.rsvps.list()
       .then(({ rsvps: r }) => setRsvps(r))
-      .catch(() => {})
+      .catch(err => setLoadError(err instanceof Error ? err.message : 'Failed to load events'))
       .finally(() => setLoading(false));
   }, [user]);
 
@@ -88,6 +89,12 @@ export default function CalendarPage() {
             <p className="text-gray-500">{upcoming.length} upcoming · {past.length} attended</p>
           </div>
         </div>
+
+        {loadError && (
+          <div className="mb-6 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm" role="alert">
+            {loadError}
+          </div>
+        )}
 
         {rsvps.length === 0 ? (
           <div className="text-center py-16 bg-white rounded-xl shadow-md">

@@ -1,9 +1,10 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { User, Edit2, MapPin, Calendar, Star, Crown, Save, X } from 'lucide-react';
+import { User, Edit2, MapPin, Calendar, Star, Crown, Save, X, Bookmark } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { api } from '../utils/api';
 import AuthModal from '../components/AuthModal';
+import { useFocusTrap } from '../hooks/useFocusTrap';
 import type { EventCategory } from '../types';
 
 const TIER_INFO = {
@@ -35,7 +36,9 @@ export default function ProfilePage() {
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [upgrading, setUpgrading] = useState(false);
+  const [saveError, setSaveError] = useState('');
   const [form, setForm] = useState({ name: '', neighborhood: '', bio: '', interests: [] as EventCategory[] });
+  const trapRef = useFocusTrap(editing);
 
   if (!user) {
     return (
@@ -55,17 +58,19 @@ export default function ProfilePage() {
 
   const startEdit = () => {
     setForm({ name: user.name, neighborhood: user.neighborhood, bio: user.bio || '', interests: user.interests as EventCategory[] });
+    setSaveError('');
     setEditing(true);
   };
 
   const saveProfile = async () => {
+    setSaveError('');
     setSaving(true);
     try {
       await api.users.updateProfile(form);
       await refreshUser();
       setEditing(false);
     } catch (e) {
-      alert(e instanceof Error ? e.message : 'Failed to save');
+      setSaveError(e instanceof Error ? e.message : 'Failed to save profile');
     } finally {
       setSaving(false);
     }
@@ -153,8 +158,8 @@ export default function ProfilePage() {
 
         {/* Edit modal */}
         {editing && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
-            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg p-8">
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" role="dialog" aria-modal="true" aria-label="Edit profile">
+            <div ref={trapRef} className="bg-white rounded-2xl shadow-2xl w-full max-w-lg p-8">
               <div className="flex items-center justify-between mb-6">
                 <h2 className="text-xl font-bold text-gray-900">Edit Profile</h2>
                 <button onClick={() => setEditing(false)} className="text-gray-400 hover:text-gray-600">
@@ -197,7 +202,12 @@ export default function ProfilePage() {
                   </div>
                 </div>
               </div>
-              <div className="flex gap-3 mt-6">
+              {saveError && (
+                <div className="mt-4 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm" role="alert">
+                  {saveError}
+                </div>
+              )}
+              <div className="flex gap-3 mt-4">
                 <button onClick={() => setEditing(false)} className="flex-1 btn-secondary">Cancel</button>
                 <button onClick={saveProfile} disabled={saving}
                   className="flex-1 btn-primary flex items-center justify-center space-x-2 disabled:opacity-60">
@@ -288,7 +298,11 @@ export default function ProfilePage() {
               <Calendar className="w-5 h-5" />
               <span className="font-medium text-sm">My Events</span>
             </Link>
-            <Link to="/organizer" className="flex items-center space-x-2 p-3 rounded-lg bg-gray-50 hover:bg-primary-50 transition-colors text-gray-700 hover:text-primary-600">
+            <Link to="/saved" className="flex items-center space-x-2 p-3 rounded-lg bg-gray-50 hover:bg-primary-50 transition-colors text-gray-700 hover:text-primary-600">
+              <Bookmark className="w-5 h-5" />
+              <span className="font-medium text-sm">Saved Events</span>
+            </Link>
+            <Link to="/organizer" className="flex items-center space-x-2 p-3 rounded-lg bg-gray-50 hover:bg-primary-50 transition-colors text-gray-700 hover:text-primary-600 col-span-2">
               <Star className="w-5 h-5" />
               <span className="font-medium text-sm">Organizer Dashboard</span>
             </Link>

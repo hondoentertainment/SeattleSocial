@@ -24,7 +24,6 @@ async function sendMagicLinkEmail(to, magicUrl) {
   const from = process.env.SMTP_FROM || process.env.SMTP_USER || 'noreply@seattlesocial.com';
 
   if (!transport) {
-    // Demo mode — log to console so developers can click the link
     console.log(`\n🔗 MAGIC LINK (demo — no SMTP configured):\n   ${magicUrl}\n`);
     return { demo: true, url: magicUrl };
   }
@@ -49,6 +48,7 @@ async function sendMagicLinkEmail(to, magicUrl) {
 
 const router = express.Router();
 
+// ── Password register ──────────────────────────────────────────────────────
 router.post('/register', async (req, res) => {
   const { name, email, password, neighborhood = '' } = req.body;
   if (!name || !email || !password) {
@@ -59,8 +59,18 @@ router.post('/register', async (req, res) => {
   }
 
   const db = getDb();
-  const existing = db.prepare('SELECT id FROM users WHERE email = ?').get(email.toLowerCase());
+  const existing = db.prepare('SELECT id, password_hash FROM users WHERE email = ?').get(email.toLowerCase());
+
   if (existing) {
+    // Magic-link-created accounts have no password yet — allow upgrading
+    if (existing.password_hash === '__magic_link__') {
+      const passwordHash = await bcrypt.hash(password, 12);
+      db.prepare('UPDATE users SET password_hash = ?, name = ?, neighborhood = ? WHERE id = ?')
+        .run(passwordHash, name, neighborhood, existing.id);
+      const user = db.prepare('SELECT id, name, email, neighborhood, membership_tier, events_attended FROM users WHERE id = ?').get(existing.id);
+      const token = signToken({ id: user.id, email: user.email });
+      return res.json({ token, user });
+    }
     return res.status(409).json({ error: 'An account with this email already exists' });
   }
 
@@ -71,10 +81,10 @@ router.post('/register', async (req, res) => {
 
   const user = db.prepare('SELECT id, name, email, neighborhood, membership_tier, events_attended FROM users WHERE id = ?').get(result.lastInsertRowid);
   const token = signToken({ id: user.id, email: user.email });
-
   res.status(201).json({ token, user });
 });
 
+// ── Password login ─────────────────────────────────────────────────────────
 router.post('/login', async (req, res) => {
   const { email, password } = req.body;
   if (!email || !password) {
@@ -87,6 +97,13 @@ router.post('/login', async (req, res) => {
     return res.status(401).json({ error: 'Invalid email or password' });
   }
 
+  // Guard: magic-link-only accounts have no password
+  if (user.password_hash === '__magic_link__') {
+    return res.status(401).json({
+      error: 'This account was created with a magic link. Use magic link to sign in, or set a password first.'
+    });
+  }
+
   const valid = await bcrypt.compare(password, user.password_hash);
   if (!valid) {
     return res.status(401).json({ error: 'Invalid email or password' });
@@ -94,9 +111,36 @@ router.post('/login', async (req, res) => {
 
   const token = signToken({ id: user.id, email: user.email });
   const { password_hash, ...safeUser } = user;
+  safeUser.interests = JSON.parse(safeUser.interests || '[]');
   res.json({ token, user: safeUser });
 });
 
+// ── Set / update password (for magic-link users or password changes) ───────
+router.post('/set-password', requireAuth, async (req, res) => {
+  const { password, currentPassword } = req.body;
+  if (!password || password.length < 8) {
+    return res.status(400).json({ error: 'Password must be at least 8 characters' });
+  }
+
+  const db = getDb();
+  const user = db.prepare('SELECT * FROM users WHERE id = ?').get(req.user.id);
+  if (!user) return res.status(404).json({ error: 'User not found' });
+
+  // If account already has a real password, require the current one
+  if (user.password_hash !== '__magic_link__') {
+    if (!currentPassword) {
+      return res.status(400).json({ error: 'currentPassword is required to change an existing password' });
+    }
+    const valid = await bcrypt.compare(currentPassword, user.password_hash);
+    if (!valid) return res.status(401).json({ error: 'Current password is incorrect' });
+  }
+
+  const passwordHash = await bcrypt.hash(password, 12);
+  db.prepare('UPDATE users SET password_hash = ? WHERE id = ?').run(passwordHash, req.user.id);
+  res.json({ message: 'Password updated successfully' });
+});
+
+// ── /me ────────────────────────────────────────────────────────────────────
 router.get('/me', requireAuth, (req, res) => {
   const db = getDb();
   const user = db.prepare(
@@ -105,10 +149,14 @@ router.get('/me', requireAuth, (req, res) => {
 
   if (!user) return res.status(404).json({ error: 'User not found' });
   user.interests = JSON.parse(user.interests || '[]');
+  // Indicate whether this is a magic-link-only account (no password set)
+  user.hasPassword = false; // will be overwritten below
+  const raw = db.prepare('SELECT password_hash FROM users WHERE id = ?').get(req.user.id);
+  user.hasPassword = raw.password_hash !== '__magic_link__';
   res.json({ user });
 });
 
-// POST /auth/magic-link/send
+// ── Magic link: send ───────────────────────────────────────────────────────
 router.post('/magic-link/send', async (req, res) => {
   const { email } = req.body;
   if (!email || !email.includes('@')) {
@@ -118,7 +166,6 @@ router.post('/magic-link/send', async (req, res) => {
   const db = getDb();
   const normalizedEmail = email.toLowerCase().trim();
 
-  // Rate-limit: at most one token per minute per email
   const recent = db.prepare(
     "SELECT id FROM magic_links WHERE email = ? AND created_at > datetime('now', '-1 minute') AND used = 0"
   ).get(normalizedEmail);
@@ -126,12 +173,10 @@ router.post('/magic-link/send', async (req, res) => {
     return res.status(429).json({ error: 'A link was already sent recently. Please wait a minute and try again.' });
   }
 
-  // Invalidate any prior unused tokens for this email
   db.prepare("UPDATE magic_links SET used = 1 WHERE email = ? AND used = 0").run(normalizedEmail);
 
   const token = crypto.randomBytes(32).toString('hex');
   const expiresAt = new Date(Date.now() + MAGIC_LINK_TTL_MINUTES * 60 * 1000).toISOString();
-
   db.prepare('INSERT INTO magic_links (token, email, expires_at) VALUES (?, ?, ?)').run(token, normalizedEmail, expiresAt);
 
   const magicUrl = `${CLIENT_URL}/auth/verify?token=${token}`;
@@ -140,7 +185,6 @@ router.post('/magic-link/send', async (req, res) => {
     const result = await sendMagicLinkEmail(normalizedEmail, magicUrl);
     res.json({
       message: `Check your email — a sign-in link is on its way to ${normalizedEmail}.`,
-      // Only expose the URL in demo mode so developers can test without SMTP
       ...(result.demo ? { demoUrl: magicUrl } : {})
     });
   } catch (err) {
@@ -149,7 +193,7 @@ router.post('/magic-link/send', async (req, res) => {
   }
 });
 
-// GET /auth/magic-link/verify?token=xxx
+// ── Magic link: verify ─────────────────────────────────────────────────────
 router.get('/magic-link/verify', (req, res) => {
   const { token } = req.query;
   if (!token || typeof token !== 'string') {
@@ -165,13 +209,10 @@ router.get('/magic-link/verify', (req, res) => {
     return res.status(400).json({ error: 'This sign-in link has expired. Please request a new one.' });
   }
 
-  // Mark the token as used immediately (prevents replay)
   db.prepare('UPDATE magic_links SET used = 1 WHERE id = ?').run(link.id);
 
-  // Find or create the user (magic link = passwordless sign-up)
   let user = db.prepare('SELECT * FROM users WHERE email = ?').get(link.email);
   if (!user) {
-    // New user — derive a default name from the email local part
     const defaultName = link.email.split('@')[0].replace(/[._-]/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
     const result = db.prepare(
       "INSERT INTO users (email, password_hash, name) VALUES (?, '__magic_link__', ?)"
@@ -182,6 +223,7 @@ router.get('/magic-link/verify', (req, res) => {
   const jwtToken = signToken({ id: user.id, email: user.email });
   const { password_hash, ...safeUser } = user;
   safeUser.interests = JSON.parse(safeUser.interests || '[]');
+  safeUser.hasPassword = password_hash !== '__magic_link__';
 
   res.json({ token: jwtToken, user: safeUser, isNewUser: user.events_attended === 0 });
 });

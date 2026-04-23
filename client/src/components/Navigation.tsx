@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'react-router-dom';
-import { Calendar, Search, User, Bell, Menu, X, LayoutDashboard } from 'lucide-react';
+import { Calendar, Search, User, Bell, Menu, X, LayoutDashboard, Bookmark } from 'lucide-react';
 import { useState } from 'react';
 import { useApp } from '../context/AppContext';
 import AuthModal from './AuthModal';
@@ -46,6 +46,12 @@ export default function Navigation() {
                 <Link to="/calendar" className={navLinkClass('/calendar')}>
                   <Calendar className="w-5 h-5" />
                   <span>My Events</span>
+                </Link>
+              )}
+              {user && (
+                <Link to="/saved" className={navLinkClass('/saved')}>
+                  <Bookmark className="w-5 h-5" />
+                  <span>Saved</span>
                 </Link>
               )}
               {user && (
@@ -104,6 +110,7 @@ export default function Navigation() {
             <div className="px-4 py-4 space-y-1">
               <MobileLink to="/events" icon={<Search className="w-5 h-5" />} label="Discover Events" onClose={() => setMobileMenuOpen(false)} />
               {user && <MobileLink to="/calendar" icon={<Calendar className="w-5 h-5" />} label="My Events" onClose={() => setMobileMenuOpen(false)} />}
+              {user && <MobileLink to="/saved" icon={<Bookmark className="w-5 h-5" />} label="Saved Events" onClose={() => setMobileMenuOpen(false)} />}
               {user && (
                 <MobileLink to="/notifications" onClose={() => setMobileMenuOpen(false)}
                   icon={

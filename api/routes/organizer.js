@@ -15,12 +15,15 @@ router.get('/events', requireAuth, (req, res) => {
   ).all(String(req.user.id));
 
   const events = rows.map(row => ({
-    id: row.id, title: row.title, category: row.category,
-    startTime: row.start_time, price: row.price,
-    capacity: row.capacity, ticketsSold: row.tickets_sold,
+    id: row.id, title: row.title, description: row.description,
+    category: row.category, startTime: row.start_time, endTime: row.end_time,
+    venueName: row.venue_name, venueAddress: row.venue_address,
+    venueNeighborhood: row.venue_neighborhood,
+    price: row.price, capacity: row.capacity, ticketsSold: row.tickets_sold,
     attendees: row.attendees, fomoScore: row.fomo_score,
-    isPublished: Boolean(row.is_published),
-    imageUrl: row.image_url
+    isPublished: Boolean(row.is_published), imageUrl: row.image_url,
+    premiumOnly: Boolean(row.premium_only),
+    tags: (() => { try { return JSON.parse(row.tags); } catch { return []; } })()
   }));
 
   res.json({ events });
@@ -30,7 +33,7 @@ router.post('/events', requireAuth, (req, res) => {
   const {
     title, description, venueName, venueAddress, venueNeighborhood,
     startTime, endTime, category, price = 0, capacity = 100,
-    imageUrl = '', tags = [], videoUrl = ''
+    imageUrl = '', tags = [], videoUrl = '', premiumOnly = false
   } = req.body;
 
   if (!title || !description || !venueName || !startTime || !endTime || !category) {
@@ -46,13 +49,13 @@ router.post('/events', requireAuth, (req, res) => {
       id, title, description, organizer_id, organizer_name,
       venue_id, venue_name, venue_address, venue_neighborhood,
       start_time, end_time, category, price, capacity,
-      image_url, video_url, tags, fomo_score, tickets_sold, attendees
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 50, 0, 0)
+      image_url, video_url, tags, fomo_score, tickets_sold, attendees, premium_only
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 50, 0, 0, ?)
   `).run(
     id, title, description, String(req.user.id), user.name,
     `venue_${id}`, venueName, venueAddress, venueNeighborhood || 'Seattle',
     startTime, endTime, category, price, capacity,
-    imageUrl, videoUrl, JSON.stringify(tags)
+    imageUrl, videoUrl, JSON.stringify(tags), premiumOnly ? 1 : 0
   );
 
   const event = db.prepare('SELECT * FROM events WHERE id = ?').get(id);
@@ -66,7 +69,7 @@ router.put('/events/:id', requireAuth, (req, res) => {
 
   const {
     title, description, venueName, venueAddress, venueNeighborhood,
-    startTime, endTime, category, price, capacity, imageUrl, tags, isPublished
+    startTime, endTime, category, price, capacity, imageUrl, tags, isPublished, premiumOnly
   } = req.body;
 
   db.prepare(`
@@ -83,13 +86,15 @@ router.put('/events/:id', requireAuth, (req, res) => {
       capacity = COALESCE(?, capacity),
       image_url = COALESCE(?, image_url),
       tags = COALESCE(?, tags),
-      is_published = COALESCE(?, is_published)
+      is_published = COALESCE(?, is_published),
+      premium_only = COALESCE(?, premium_only)
     WHERE id = ?
   `).run(
     title, description, venueName, venueAddress, venueNeighborhood,
     startTime, endTime, category, price, capacity, imageUrl,
     tags ? JSON.stringify(tags) : null,
     isPublished !== undefined ? (isPublished ? 1 : 0) : null,
+    premiumOnly !== undefined ? (premiumOnly ? 1 : 0) : null,
     req.params.id
   );
 

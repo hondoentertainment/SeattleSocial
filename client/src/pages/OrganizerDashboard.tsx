@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Plus, Edit2, Trash2, BarChart2, Users, DollarSign, Calendar, Eye, EyeOff } from 'lucide-react';
+import { Plus, Edit2, Trash2, BarChart2, Users, DollarSign, Calendar, Eye, EyeOff, Lock } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { api } from '../utils/api';
 import type { OrganizerEvent, OrganizerStats, CreateEventPayload } from '../utils/api';
 import AuthModal from '../components/AuthModal';
+import { useFocusTrap } from '../hooks/useFocusTrap';
 import type { EventCategory } from '../types';
 
 const CATEGORIES: { id: EventCategory; label: string }[] = [
@@ -26,27 +27,35 @@ const NEIGHBORHOODS = [
 
 const EMPTY_FORM: CreateEventPayload = {
   title: '', description: '', venueName: '', venueAddress: '', venueNeighborhood: 'Capitol Hill',
-  startTime: '', endTime: '', category: 'music', price: 0, capacity: 100, imageUrl: '', tags: []
+  startTime: '', endTime: '', category: 'music', price: 0, capacity: 100, imageUrl: '', tags: [],
+  premiumOnly: false
 };
+
+function toDatetimeLocal(s: string): string {
+  if (!s) return '';
+  return s.replace(' ', 'T').slice(0, 16);
+}
 
 export default function OrganizerDashboard() {
   const { user } = useApp();
   const [events, setEvents] = useState<OrganizerEvent[]>([]);
   const [stats, setStats] = useState<OrganizerStats | null>(null);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState('');
   const [showAuth, setShowAuth] = useState(false);
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState<CreateEventPayload>(EMPTY_FORM);
   const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState('');
+  const [formError, setFormError] = useState('');
   const [tagsInput, setTagsInput] = useState('');
+  const trapRef = useFocusTrap(showForm);
 
   useEffect(() => {
     if (!user) { setLoading(false); return; }
     Promise.all([api.organizer.events(), api.organizer.stats()])
       .then(([{ events: e }, { stats: s }]) => { setEvents(e); setStats(s); })
-      .catch(() => {})
+      .catch(err => setLoadError(err instanceof Error ? err.message : 'Failed to load dashboard'))
       .finally(() => setLoading(false));
   }, [user]);
 
@@ -54,25 +63,35 @@ export default function OrganizerDashboard() {
     setForm(EMPTY_FORM);
     setTagsInput('');
     setEditingId(null);
-    setError('');
+    setFormError('');
     setShowForm(true);
   };
 
   const openEdit = (event: OrganizerEvent) => {
     setForm({
-      title: event.title, description: '', venueName: '', venueAddress: '', venueNeighborhood: 'Capitol Hill',
-      startTime: event.startTime, endTime: '', category: event.category as EventCategory,
-      price: event.price, capacity: event.capacity, imageUrl: event.imageUrl, tags: []
+      title: event.title,
+      description: event.description,
+      venueName: event.venueName,
+      venueAddress: event.venueAddress,
+      venueNeighborhood: event.venueNeighborhood,
+      startTime: toDatetimeLocal(event.startTime),
+      endTime: toDatetimeLocal(event.endTime),
+      category: event.category as EventCategory,
+      price: event.price,
+      capacity: event.capacity,
+      imageUrl: event.imageUrl,
+      tags: event.tags,
+      premiumOnly: event.premiumOnly
     });
-    setTagsInput('');
+    setTagsInput(event.tags.join(', '));
     setEditingId(event.id);
-    setError('');
+    setFormError('');
     setShowForm(true);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
+    setFormError('');
     setSubmitting(true);
     try {
       const payload = { ...form, tags: tagsInput.split(',').map(t => t.trim()).filter(Boolean) };
@@ -81,12 +100,12 @@ export default function OrganizerDashboard() {
         setEvents(prev => prev.map(ev => ev.id === editingId ? event as unknown as OrganizerEvent : ev));
       } else {
         const { event } = await api.organizer.create(payload);
-        setEvents(prev => [event, ...prev]);
+        setEvents(prev => [event as unknown as OrganizerEvent, ...prev]);
         if (stats) setStats(s => s ? { ...s, totalEvents: s.totalEvents + 1 } : s);
       }
       setShowForm(false);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to save event');
+      setFormError(err instanceof Error ? err.message : 'Failed to save event');
     } finally {
       setSubmitting(false);
     }
@@ -145,25 +164,36 @@ export default function OrganizerDashboard() {
             <p className="text-gray-500 mt-1">Manage your events and track performance</p>
           </div>
           <button onClick={openCreate} className="btn-primary flex items-center space-x-2">
-            <Plus className="w-5 h-5" />
+            <Plus className="w-5 h-5" aria-hidden="true" />
             <span>Create Event</span>
           </button>
         </div>
 
+        {loadError && (
+          <div className="mb-6 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
+            {loadError}
+          </div>
+        )}
+
         {/* Stats */}
         {stats && (
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-            <StatCard icon={<Calendar className="w-6 h-6 text-primary-600" />} label="Total Events" value={stats.totalEvents} />
-            <StatCard icon={<Calendar className="w-6 h-6 text-blue-500" />} label="Upcoming" value={stats.upcomingEvents} />
-            <StatCard icon={<Users className="w-6 h-6 text-green-500" />} label="Total Attendees" value={stats.totalAttendees} />
-            <StatCard icon={<DollarSign className="w-6 h-6 text-yellow-500" />} label="Revenue" value={`$${stats.totalRevenue.toFixed(0)}`} />
+            <StatCard icon={<Calendar className="w-6 h-6 text-primary-600" aria-hidden="true" />} label="Total Events" value={stats.totalEvents} />
+            <StatCard icon={<Calendar className="w-6 h-6 text-blue-500" aria-hidden="true" />} label="Upcoming" value={stats.upcomingEvents} />
+            <StatCard icon={<Users className="w-6 h-6 text-green-500" aria-hidden="true" />} label="Total Attendees" value={stats.totalAttendees} />
+            <StatCard icon={<DollarSign className="w-6 h-6 text-yellow-500" aria-hidden="true" />} label="Revenue" value={`$${stats.totalRevenue.toFixed(0)}`} />
           </div>
         )}
 
         {/* Event Form Modal */}
         {showForm && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 overflow-y-auto">
-            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl my-4">
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 overflow-y-auto"
+            role="dialog"
+            aria-modal="true"
+            aria-label={editingId ? 'Edit event' : 'Create new event'}
+          >
+            <div ref={trapRef} className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl my-4">
               <div className="p-8">
                 <h2 className="text-2xl font-bold text-gray-900 mb-6">
                   {editingId ? 'Edit Event' : 'Create New Event'}
@@ -262,10 +292,27 @@ export default function OrganizerDashboard() {
                         placeholder="e.g. live-music, 21+, outdoor"
                         className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500" />
                     </div>
+
+                    <div className="md:col-span-2">
+                      <label className="flex items-center space-x-3 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={form.premiumOnly ?? false}
+                          onChange={e => setForm(f => ({ ...f, premiumOnly: e.target.checked }))}
+                          className="w-4 h-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500"
+                        />
+                        <span className="flex items-center space-x-2 text-sm font-medium text-gray-700">
+                          <Lock className="w-4 h-4 text-primary-500" aria-hidden="true" />
+                          <span>Premium members early access (48 hrs before general public)</span>
+                        </span>
+                      </label>
+                    </div>
                   </div>
 
-                  {error && (
-                    <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">{error}</div>
+                  {formError && (
+                    <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm" role="alert">
+                      {formError}
+                    </div>
                   )}
 
                   <div className="flex gap-3 pt-2">
@@ -314,7 +361,15 @@ export default function OrganizerDashboard() {
                             <Link to={`/events/${event.id}`} className="font-semibold text-gray-900 hover:text-primary-600 line-clamp-1">
                               {event.title}
                             </Link>
-                            <span className="text-xs text-gray-400 capitalize">{event.category.replace('-', ' & ')}</span>
+                            <div className="flex items-center space-x-1.5">
+                              <span className="text-xs text-gray-400 capitalize">{event.category.replace('-', ' & ')}</span>
+                              {event.premiumOnly && (
+                                <span className="text-xs bg-primary-100 text-primary-700 px-1.5 py-0.5 rounded-full font-medium flex items-center space-x-0.5">
+                                  <Lock className="w-2.5 h-2.5" aria-hidden="true" />
+                                  <span>Premium</span>
+                                </span>
+                              )}
+                            </div>
                           </div>
                         </div>
                       </td>
@@ -340,15 +395,22 @@ export default function OrganizerDashboard() {
                       </td>
                       <td className="px-6 py-4">
                         <div className="flex items-center space-x-2">
-                          <button onClick={() => handleTogglePublish(event)}
-                            title={event.isPublished ? 'Unpublish' : 'Publish'}
+                          <button
+                            onClick={() => handleTogglePublish(event)}
+                            aria-label={event.isPublished ? `Unpublish ${event.title}` : `Publish ${event.title}`}
                             className="p-1.5 text-gray-400 hover:text-primary-600 transition-colors">
                             {event.isPublished ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                           </button>
-                          <button onClick={() => openEdit(event)} className="p-1.5 text-gray-400 hover:text-blue-600 transition-colors">
+                          <button
+                            onClick={() => openEdit(event)}
+                            aria-label={`Edit ${event.title}`}
+                            className="p-1.5 text-gray-400 hover:text-blue-600 transition-colors">
                             <Edit2 className="w-4 h-4" />
                           </button>
-                          <button onClick={() => handleDelete(event.id)} className="p-1.5 text-gray-400 hover:text-red-600 transition-colors">
+                          <button
+                            onClick={() => handleDelete(event.id)}
+                            aria-label={`Delete ${event.title}`}
+                            className="p-1.5 text-gray-400 hover:text-red-600 transition-colors">
                             <Trash2 className="w-4 h-4" />
                           </button>
                         </div>

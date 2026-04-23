@@ -1,6 +1,5 @@
 const Database = require('better-sqlite3');
 const path = require('path');
-const fs = require('fs');
 
 const DB_PATH = path.join(__dirname, 'seattlesocial.db');
 
@@ -12,12 +11,21 @@ function getDb() {
     db.pragma('journal_mode = WAL');
     db.pragma('foreign_keys = ON');
     initSchema();
+    runMigrations();
+    pruneExpiredMagicLinks();
+    seedEvents();
   }
   return db;
 }
 
+// ── Base schema (v0) ────────────────────────────────────────────────────────
 function initSchema() {
   db.exec(`
+    CREATE TABLE IF NOT EXISTS schema_migrations (
+      version INTEGER PRIMARY KEY,
+      applied_at TEXT DEFAULT (datetime('now'))
+    );
+
     CREATE TABLE IF NOT EXISTS users (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       email TEXT UNIQUE NOT NULL,
@@ -56,6 +64,7 @@ function initSchema() {
       tags TEXT DEFAULT '[]',
       attendees INTEGER DEFAULT 0,
       is_published INTEGER DEFAULT 1,
+      premium_only INTEGER DEFAULT 0,
       created_at TEXT DEFAULT (datetime('now'))
     );
 
@@ -113,11 +122,65 @@ function initSchema() {
       used INTEGER DEFAULT 0,
       created_at TEXT DEFAULT (datetime('now'))
     );
-  `);
 
-  seedEvents();
+    CREATE TABLE IF NOT EXISTS friends (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      requester_id INTEGER NOT NULL,
+      addressee_id INTEGER NOT NULL,
+      status TEXT DEFAULT 'pending',
+      created_at TEXT DEFAULT (datetime('now')),
+      FOREIGN KEY (requester_id) REFERENCES users(id),
+      FOREIGN KEY (addressee_id) REFERENCES users(id),
+      UNIQUE(requester_id, addressee_id)
+    );
+  `);
 }
 
+// ── Incremental migrations ──────────────────────────────────────────────────
+const MIGRATIONS = [
+  {
+    version: 1,
+    sql: `
+      CREATE INDEX IF NOT EXISTS idx_events_category ON events(category);
+      CREATE INDEX IF NOT EXISTS idx_events_start_time ON events(start_time);
+      CREATE INDEX IF NOT EXISTS idx_events_neighborhood ON events(venue_neighborhood);
+      CREATE INDEX IF NOT EXISTS idx_rsvps_user_id ON rsvps(user_id);
+      CREATE INDEX IF NOT EXISTS idx_rsvps_event_id ON rsvps(event_id);
+      CREATE INDEX IF NOT EXISTS idx_rsvps_status ON rsvps(status);
+      CREATE INDEX IF NOT EXISTS idx_saved_events_user ON saved_events(user_id);
+      CREATE INDEX IF NOT EXISTS idx_notifications_user ON notifications(user_id, is_read);
+      CREATE INDEX IF NOT EXISTS idx_magic_links_token ON magic_links(token);
+      CREATE INDEX IF NOT EXISTS idx_magic_links_email ON magic_links(email);
+      CREATE INDEX IF NOT EXISTS idx_friends_requester ON friends(requester_id);
+      CREATE INDEX IF NOT EXISTS idx_friends_addressee ON friends(addressee_id);
+    `
+  }
+];
+
+function runMigrations() {
+  const applied = new Set(
+    db.prepare('SELECT version FROM schema_migrations').all().map(r => r.version)
+  );
+
+  for (const m of MIGRATIONS) {
+    if (applied.has(m.version)) continue;
+    db.transaction(() => {
+      db.exec(m.sql);
+      db.prepare('INSERT INTO schema_migrations (version) VALUES (?)').run(m.version);
+    })();
+    console.log(`✓ Migration ${m.version} applied`);
+  }
+}
+
+// ── Housekeeping ────────────────────────────────────────────────────────────
+function pruneExpiredMagicLinks() {
+  const { changes } = db.prepare(
+    "DELETE FROM magic_links WHERE expires_at < datetime('now') OR used = 1"
+  ).run();
+  if (changes > 0) console.log(`Pruned ${changes} expired/used magic link(s)`);
+}
+
+// ── Seed events ─────────────────────────────────────────────────────────────
 function seedEvents() {
   const count = db.prepare('SELECT COUNT(*) as c FROM events').get();
   if (count.c > 0) return;
@@ -137,11 +200,7 @@ function seedEvents() {
     )
   `);
 
-  const insertMany = db.transaction((evts) => {
-    for (const e of evts) insert.run(e);
-  });
-
-  insertMany(events);
+  db.transaction(evts => { for (const e of evts) insert.run(e); })(events);
 }
 
 module.exports = { getDb };

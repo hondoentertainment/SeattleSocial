@@ -25,6 +25,8 @@ export const api = {
     login: (body: { email: string; password: string }) =>
       request<{ token: string; user: AppUser }>('/auth/login', { method: 'POST', body: JSON.stringify(body) }),
     me: () => request<{ user: AppUser }>('/auth/me'),
+    setPassword: (body: { password: string; currentPassword?: string }) =>
+      request<{ message: string }>('/auth/set-password', { method: 'POST', body: JSON.stringify(body) }),
     sendMagicLink: (email: string) =>
       request<{ message: string; demoUrl?: string }>('/auth/magic-link/send', { method: 'POST', body: JSON.stringify({ email }) }),
     verifyMagicLink: (token: string) =>
@@ -41,10 +43,12 @@ export const api = {
   rsvps: {
     list: () => request<{ rsvps: RSVP[] }>('/rsvps'),
     create: (eventId: string, ticketCount = 1) =>
-      request<{ rsvp: RSVP; isFirstEvent: boolean; totalPaid: number }>('/rsvps', {
+      request<{ waitlist: boolean; position?: number; message?: string; isFirstEvent?: boolean; totalPaid?: number }>('/rsvps', {
         method: 'POST', body: JSON.stringify({ eventId, ticketCount })
       }),
-    cancel: (eventId: string) => request<{ message: string }>(`/rsvps/${eventId}`, { method: 'DELETE' })
+    cancel: (eventId: string) => request<{ message: string }>(`/rsvps/${eventId}`, { method: 'DELETE' }),
+    waitlistPosition: (eventId: string) =>
+      request<{ onWaitlist: boolean; position?: number }>(`/rsvps/waitlist/${eventId}`)
   },
   users: {
     saved: () => request<{ savedEvents: SavedEvent[] }>('/users/saved'),
@@ -59,7 +63,7 @@ export const api = {
     stats: () => request<{ stats: OrganizerStats }>('/organizer/stats'),
     create: (body: CreateEventPayload) =>
       request<{ event: OrganizerEvent }>('/organizer/events', { method: 'POST', body: JSON.stringify(body) }),
-    update: (id: string, body: Partial<CreateEventPayload & { isPublished: boolean }>) =>
+    update: (id: string, body: Partial<CreateEventPayload & { isPublished: boolean; premiumOnly: boolean }>) =>
       request<{ event: OrganizerEvent }>(`/organizer/events/${id}`, { method: 'PUT', body: JSON.stringify(body) }),
     delete: (id: string) => request<{ message: string }>(`/organizer/events/${id}`, { method: 'DELETE' })
   },
@@ -68,8 +72,18 @@ export const api = {
       request<{ checkoutUrl?: string; mockCheckout?: boolean; tier: string; plan: { price: number; name: string } }>('/payments/create-checkout', {
         method: 'POST', body: JSON.stringify({ tier })
       })
+  },
+  friends: {
+    list: () => request<{ friends: FriendUser[]; incoming: FriendRequest[]; outgoing: FriendRequest[] }>('/friends'),
+    search: (q: string) => request<{ users: FriendUser[] }>(`/friends/search?q=${encodeURIComponent(q)}`),
+    request: (userId: number) => request<{ message: string }>(`/friends/request/${userId}`, { method: 'POST' }),
+    accept: (requesterId: number) => request<{ message: string }>(`/friends/accept/${requesterId}`, { method: 'POST' }),
+    remove: (userId: number) => request<{ message: string }>(`/friends/${userId}`, { method: 'DELETE' }),
+    forEvent: (eventId: string) => request<{ friends: FriendUser[] }>(`/friends/event/${eventId}`)
   }
 };
+
+// ── Types ──────────────────────────────────────────────────────────────────
 
 export interface AppUser {
   id: number;
@@ -81,6 +95,7 @@ export interface AppUser {
   membership_tier: 'free' | 'premium' | 'premium-plus';
   events_attended: number;
   interests: string[];
+  hasPassword?: boolean;
 }
 
 export interface RSVP {
@@ -109,9 +124,12 @@ export interface Notification {
 }
 
 export interface OrganizerEvent {
-  id: string; title: string; category: string; startTime: string;
+  id: string; title: string; description: string; category: string;
+  startTime: string; endTime: string;
+  venueName: string; venueAddress: string; venueNeighborhood: string;
   price: number; capacity: number; ticketsSold: number;
-  attendees: number; fomoScore: number; isPublished: boolean; imageUrl: string;
+  attendees: number; fomoScore: number; isPublished: boolean;
+  imageUrl: string; premiumOnly: boolean; tags: string[];
 }
 
 export interface OrganizerStats {
@@ -122,4 +140,13 @@ export interface CreateEventPayload {
   title: string; description: string; venueName: string; venueAddress: string;
   venueNeighborhood: string; startTime: string; endTime: string;
   category: string; price: number; capacity: number; imageUrl: string; tags: string[];
+  premiumOnly?: boolean;
+}
+
+export interface FriendUser {
+  id: number; name: string; email: string; neighborhood: string; profile_photo: string;
+}
+
+export interface FriendRequest extends FriendUser {
+  request_id: number;
 }

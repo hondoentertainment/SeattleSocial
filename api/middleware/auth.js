@@ -3,13 +3,12 @@ const jwt = require('jsonwebtoken');
 const JWT_SECRET = process.env.JWT_SECRET || 'seattlesocial-dev-secret-change-in-production';
 
 function requireAuth(req, res, next) {
+  // Accept token from Authorization header or ?token= query param (SSE only)
   const header = req.headers.authorization;
-  if (!header || !header.startsWith('Bearer ')) {
-    return res.status(401).json({ error: 'Authentication required' });
-  }
-  const token = header.slice(7);
+  const raw = header?.startsWith('Bearer ') ? header.slice(7) : (req.query.token || null);
+  if (!raw) return res.status(401).json({ error: 'Authentication required' });
   try {
-    req.user = jwt.verify(token, JWT_SECRET);
+    req.user = jwt.verify(String(raw), JWT_SECRET);
     next();
   } catch {
     return res.status(401).json({ error: 'Invalid or expired token' });
